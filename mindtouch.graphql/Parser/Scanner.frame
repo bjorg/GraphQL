@@ -1,0 +1,309 @@
+-->begin
+/*
+ * MindTouch GraphQL 
+ * Copyright (C) 2006-2016 MindTouch, Inc.
+ * www.mindtouch.com  oss@mindtouch.com
+ *
+ * For community documentation and downloads visit mindtouch.com;
+ * please review the licensing section.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+using System;
+using System.Collections.Generic;
+
+-->namespace
+
+internal class Token {
+	public int kind;    // token kind
+	public int pos;     // token position in bytes in the source text (starting at 0)
+	public int charPos;  // token position in characters in the source text (starting at 0)
+	public int col;     // token column (starting at 1)
+	public int line;    // token line (starting at 1)
+    public string origin; // origin of source code
+    public string path; // xpath to location in XML document
+	public string val;  // token value
+	public Token next;  // ML 2005-03-11 Tokens are kept in linked list
+	
+//	public Location Location { get { return new Location(origin, path, line, col); } }
+}
+
+//-----------------------------------------------------------------------------------
+// Buffer
+//-----------------------------------------------------------------------------------
+internal class Buffer {
+
+	//--- Constants ---
+	public const int EOF = char.MaxValue + 1;
+
+	//--- Fields ---
+	private readonly string _source;
+	private readonly int _start;
+	private readonly int _end;
+	private int _current;
+	
+	//--- Constructors ---
+	public Buffer(string source, int start, int end) {
+		if(source == null) {
+			throw new ArgumentNullException("source");
+		}
+		if(start > end) {
+			throw new ArgumentException("start index is beyond the end position", "start");
+		}
+		if(end > source.Length) {
+			throw new ArgumentException("end position is greater than source length", "start");
+		}
+		if((_start != _end) && (start >= source.Length)) {
+			throw new ArgumentException("start index is greater than source length", "start");
+		}
+		_source = source;
+		_start = start;
+		_end = end;
+		_current = start;
+	}
+
+	//--- Methods ---	
+	public int Read() {
+	next:
+		if(_current >= _end) {
+			return EOF;
+		}
+		var result = _source[_current++];
+		switch(result) {
+		case '\u00A0':
+		case '\u1680':
+		case '\u180E':
+		case '\u2000':
+		case '\u2001':
+		case '\u2002':
+		case '\u2003':
+		case '\u2004':
+		case '\u2005':
+		case '\u2006':
+		case '\u2007':
+		case '\u2008':
+		case '\u2009':
+		case '\u200A':
+		case '\u202F':
+		case '\u205F':
+		case '\u3000':
+
+			// 00A0: No-break space -> space
+			// 1680: Ogham separator -> space
+			// 180E: Mongolian vowel separator -> space
+			// 2000: En quad -> space
+			// 2001: Em quad -> space
+			// 2002: En space -> space
+			// 2003: Em space -> space
+			// 2004: Three-per-em space -> space
+			// 2005: Four-per-em space -> space
+			// 2006: Six-per-em space -> space
+			// 2007: Figure space -> space
+			// 2008: Punctuation space -> space
+			// 2009: Thin space -> space
+			// 200A: Hair space -> space
+			// 202F: Narrow no-break space -> space
+			// 205F: Medium math space -> space
+			// 3000: Ideographic space -> space
+			return ' ';
+		case '\u00AD':
+		case '\u1806':
+		case '\u200B':
+		case '\u200C':
+		case '\u200D':
+		case '\u2060':
+
+			// 00AD: Soft-hypen -> skipped
+			// 1806: Mongolian soft-hyphen -> skipped
+			// 200B: Zero-width space -> skipped
+			// 200C: Zero-width non-joiner -> skipped
+			// 200D: Zero-width joiner -> skipped
+			// 2060: Word joiner -> skipped
+			goto next;
+		}
+		return result;
+	}
+
+	public int Peek() {
+		var curPos = Pos;
+		var ch = Read();
+		Pos = curPos;
+		return ch;
+	}
+
+	public int Pos {
+		get { return _current; }
+		set {
+			if((value < _start) || (value >= _end)) {
+				throw new ArgumentOutOfRangeException("value", "trying to set Position out of bounds");
+			}
+			_current = value;
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------------
+// Scanner
+//-----------------------------------------------------------------------------------
+internal class Scanner {
+	const int EOL = '\n';
+	const int eofSym = 0; /* pdt */
+-->declarations
+
+	public Buffer buffer; // scanner buffer
+	
+	Token t;			// current token
+	int ch;				// current input character
+	int pos;			// byte position of current character
+	int charPos;		// position by unicode characters starting with 0
+	int col;			// column number of current character
+	int line;			// line number of current character
+	string origin;		// code origin (e.g. filename, web address, ...)
+	string path;		// xpath to location in XML documents
+	int oldEols;		// EOLs that appeared in a comment;
+	static readonly Dictionary<int, int> start; // maps first token character to start state
+
+	Token tokens;     // list of tokens already peeked (first token is a dummy)
+	Token pt;         // current peek token
+	
+	char[] tval = new char[128]; // text of current token
+	int tlen;         // length of current token
+	
+	static Scanner() {
+		start = new Dictionary<int, int>(128);
+// ReSharper disable SuggestUseVarKeywordEverywhere
+-->initialization
+// ReSharper restore SuggestUseVarKeywordEverywhere
+	}
+	
+	public Scanner(string source, string origin, string path, int line, int column, int charPos) {
+		buffer = new Buffer(source, 0, source.Length);
+		Init(origin, path, line, column, charPos);
+	}
+	
+	void Init(string o, string p, int l, int c, int cp) {
+		pos = -1;
+		line = l;
+		col = c; 
+		charPos = cp;
+		origin = o;
+		path = p;
+		oldEols = 0;
+		NextCh();
+		pt = tokens = new Token();  // first token is a dummy
+	}
+	
+	void NextCh() {
+		if(oldEols > 0) { ch = EOL; oldEols--; } 
+		else {
+			pos = buffer.Pos;
+			ch = buffer.Read();
+			col++;
+			charPos++;
+
+			// replace isolated '\r' by '\n' in order to make
+			// eol handling uniform across Windows, Unix and Mac
+			if(ch == '\r' && buffer.Peek() != '\n') ch = EOL;
+			if(ch == EOL) { line++; col = 0; }
+		}
+-->casing1
+	}
+
+	void AddCh() {
+		if(tlen >= tval.Length) {
+			var newBuf = new char[2 * tval.Length];
+			Array.Copy(tval, 0, newBuf, 0, tval.Length);
+			tval = newBuf;
+		}
+		if(ch != Buffer.EOF) {
+-->casing2
+			NextCh();
+		}
+	}
+
+// ReSharper disable RedundantIfElseBlock
+-->comments
+// ReSharper restore RedundantIfElseBlock
+
+	void CheckLiteral() {
+// ReSharper disable RedundantEmptyDefaultSwitchBranch
+-->literals
+// ReSharper restore RedundantEmptyDefaultSwitchBranch
+	}
+
+	Token NextToken() {
+		while(ch == ' ' ||
+-->scan1
+		) NextCh();
+-->scan2
+		var recKind = noSym;
+		var recEnd = pos;
+        t = new Token { pos = pos, col = col, line = line, origin = origin, path = path, charPos = charPos };
+		int state;
+		start.TryGetValue(ch, out state);
+		tlen = 0; AddCh();
+		
+		switch(state) {
+			case -1: { t.kind = eofSym; break; } // NextCh already done
+			case 0: {
+				if(recKind != noSym) {
+					tlen = recEnd - t.pos;
+					SetScannerBehindT();
+				}
+				t.kind = recKind; break;
+			} // NextCh already done
+// ReSharper disable RedundantIfElseBlock
+// ReSharper disable RedundantAssignment
+-->scan3
+// ReSharper restore RedundantAssignment
+// ReSharper restore RedundantIfElseBlock
+		}
+		t.val = new String(tval, 0, tlen);
+		return t;
+	}
+	
+	private void SetScannerBehindT() {
+		buffer.Pos = t.pos;
+		NextCh();
+		line = t.line;
+		col = t.col;
+		charPos = t.charPos;
+		for(var i = 0; i < tlen; i++) NextCh();
+	}
+	
+	// get the next token (possibly a token already seen during peeking)
+	public Token Scan() {
+		if(tokens.next == null) {
+			return NextToken();
+		}
+		pt = tokens = tokens.next;
+		return tokens;
+	}
+
+	// peek for the next token, ignore pragmas
+	public Token Peek() {
+		do {
+			if(pt.next == null) {
+				pt.next = NextToken();
+			}
+			pt = pt.next;
+		} while(pt.kind > maxT); // skip pragmas
+		return pt;
+	}
+	
+	// make sure that peeking starts at the current scan position
+	public void ResetPeek() { pt = tokens; }
+
+} // end Scanner
+

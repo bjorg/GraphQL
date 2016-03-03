@@ -1,0 +1,10 @@
+*.BACKUP.*
+*.BASE.*
+*.LOCAL.*
+*.REMOTE.*
+**/[Dd]ebug/
+**/[Rr]elease/
+*.ncb
+*.suo
+_ReSharper.*/
+*.pdb

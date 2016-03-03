@@ -1,0 +1,206 @@
+/*
+ * MindTouch GraphQL 
+ * Copyright (C) 2006-2016 MindTouch, Inc.
+ * www.mindtouch.com  oss@mindtouch.com
+ *
+ * For community documentation and downloads visit mindtouch.com;
+ * please review the licensing section.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+// COCO Bugs
+// * case-sensitive in unicode constants (e.g. '\u00AD' doesn't work)
+
+using System;
+
+COMPILER GraphQL
+
+CHARACTERS
+	tab = '\t'.
+	nl = '\n'.
+	cr = '\r'.
+	underscore = '_'.
+	comma = ','.
+	letter = 'a'..'z'.
+	digit = '0'..'9'.
+	hex = digit + "abcdef".
+	quotechar  = ANY - '\'' - '\\'.
+	commentchar = ANY - '\r' - '\n'.
+
+TOKENS
+
+	name = ( underscore | letter ) { letter | digit | underscore }.
+
+	directive = '@' ( underscore | letter ) { letter | digit | underscore }.
+
+	variable = '$' ( underscore | letter ) { letter | digit | underscore }.
+		
+	string = 
+		"'" { 
+			quotechar
+			| "\\\'" | "\\\"" | "\\\\" | "\\/" | "\\a" | "\\b" | "\\f" | "\\n" | "\\r" | "\\t" | "\\v"
+			| "\\u" hex hex hex hex
+		} "'"
+		.
+	
+	number =
+		[ "-" ] (
+			digit { digit } 
+			| "." digit { digit } ["e" ["+" | "-"] digit { digit }]
+			| digit { digit } ( "." digit {digit} ["e" ["+" | "-"] digit { digit }] | "e" ["+" | "-"] digit { digit })
+		)
+		.
+
+	// reserved keywords
+	true = "true".
+	false = "false".
+	null = "null".
+
+PRAGMAS	
+	comment 
+		= '#' { commentchar } [ "\r\n" | "\r" | "\n" ]
+		.
+
+IGNORE nl + cr + tab + comma
+
+PRODUCTIONS
+
+	GraphQL =
+		Document
+		.
+
+	Document =
+		Definition { Definition }
+		.
+
+	Definition =
+		OperationDefinition
+		| FragmentDefinition
+		.
+
+	OperationDefinition =
+		SelectionSet
+		| OperationType [ OperationName ] [ VariableDefinitions ] [ Directives ] SelectionSet
+		.
+
+	OperationName =
+		name
+		.
+
+	OperationType =
+		"query"
+		| "mutation"
+		.
+
+	SelectionSet =
+		"{" Selection { Selection } "}"
+		.
+
+	Selection =
+		Field
+		| "..." (
+			FragmentSpread
+			InlineFragment
+		)
+		.
+
+	Field =
+		FieldName [ Arguments ] [ Directives ] [ SelectionSet ]
+		.
+
+	FieldName =
+		name [ ":" name ]
+		.
+
+	Arguments =
+		'(' Argument { Argument } ')'
+		.
+
+	Argument =
+		name ':' Value
+		.
+
+	FragmentSpread =
+		FragmentName [ Directives ]
+		.
+
+	InlineFragment =
+		"on" NamedType [ Directives ] SelectionSet
+		.
+
+	FragmentDefinition =
+		"fragment" FragmentName "on" NamedType [ Directives ] SelectionSet
+		.
+
+	FragmentName =
+		name
+		.
+
+	Boolean =
+		true
+		| false
+		.
+
+	Value =
+		string
+		| number
+		| Boolean
+		| variable
+		| Enum
+		| List
+		| Object
+		.
+
+	Enum =
+		name
+		.
+
+	List =
+		"[" { Value } "]"
+		.
+
+	Object =
+		"{" ObjectField { ObjectField } "}"
+		.
+
+	ObjectField =
+		name "=" Value
+		.
+
+	VariableDefinitions =
+		"(" VariableDefinition { VariableDefinition } ")"
+		.
+
+	VariableDefinition =
+		variable ":" Type [ "=" Value ]
+		.
+
+	Type =
+		NamedType [ "!" ]
+		| ListType [ "!" ]
+		.
+
+	NamedType =
+		name
+		.
+
+	ListType =
+		"[" Type "]"
+		.
+
+	Directives =
+		directive { directive }
+		.
+
+END GraphQL.
