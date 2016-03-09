@@ -41,10 +41,6 @@ CHARACTERS
 TOKENS
 
 	name = ( underscore | letter ) { letter | digit | underscore }.
-
-	directive = '@' ( underscore | letter ) { letter | digit | underscore }.
-
-	variable = '$' ( underscore | letter ) { letter | digit | underscore }.
 		
 	string = 
 		"'" { 
@@ -156,7 +152,7 @@ PRODUCTIONS
 		string
 		| number
 		| Boolean
-		| variable
+		| Variable
 		| Enum
 		| List
 		| Object
@@ -183,7 +179,11 @@ PRODUCTIONS
 		.
 
 	VariableDefinition =
-		variable ":" Type [ "=" Value ]
+		Variable ":" Type [ "=" Value ]
+		.
+
+	Variable =
+		"$" name
 		.
 
 	Type =
@@ -200,7 +200,11 @@ PRODUCTIONS
 		.
 
 	Directives =
-		directive { directive }
+		Directive { Directive }
+		.
+
+	Directive =
+		"@" name
 		.
 
 END GraphQL.

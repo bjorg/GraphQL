@@ -33,13 +33,11 @@ namespace MindTouch.GraphQL.Parser {
 internal class GraphQLParser {
 	public const int _EOF = 0;
 	public const int _name = 1;
-	public const int _directive = 2;
-	public const int _variable = 3;
-	public const int _string = 4;
-	public const int _number = 5;
-	public const int _true = 6;
-	public const int _false = 7;
-	public const int _null = 8;
+	public const int _string = 2;
+	public const int _number = 3;
+	public const int _true = 4;
+	public const int _false = 5;
+	public const int _null = 6;
 	public const int maxT = 23;
 	public const int _comment = 24;
 
@@ -103,25 +101,25 @@ internal class GraphQLParser {
 	}
 
 	void Definition() {
-		if (la.kind == 9 || la.kind == 10 || la.kind == 11) {
+		if (la.kind == 7 || la.kind == 8 || la.kind == 9) {
 			OperationDefinition();
-		} else if (la.kind == 18) {
+		} else if (la.kind == 16) {
 			FragmentDefinition();
 		} else SynErr(24);
 	}
 
 	void OperationDefinition() {
-		if (la.kind == 11) {
+		if (la.kind == 9) {
 			SelectionSet();
-		} else if (la.kind == 9 || la.kind == 10) {
+		} else if (la.kind == 7 || la.kind == 8) {
 			OperationType();
 			if (la.kind == 1) {
 				OperationName();
 			}
-			if (la.kind == 15) {
+			if (la.kind == 13) {
 				VariableDefinitions();
 			}
-			if (la.kind == 2) {
+			if (la.kind == 22) {
 				Directives();
 			}
 			SelectionSet();
@@ -129,29 +127,29 @@ internal class GraphQLParser {
 	}
 
 	void FragmentDefinition() {
-		Expect(18);
+		Expect(16);
 		FragmentName();
-		Expect(17);
+		Expect(15);
 		NamedType();
-		if (la.kind == 2) {
+		if (la.kind == 22) {
 			Directives();
 		}
 		SelectionSet();
 	}
 
 	void SelectionSet() {
-		Expect(11);
+		Expect(9);
 		Selection();
-		while (la.kind == 1 || la.kind == 13) {
+		while (la.kind == 1 || la.kind == 11) {
 			Selection();
 		}
-		Expect(12);
+		Expect(10);
 	}
 
 	void OperationType() {
-		if (la.kind == 9) {
+		if (la.kind == 7) {
 			Get();
-		} else if (la.kind == 10) {
+		} else if (la.kind == 8) {
 			Get();
 		} else SynErr(26);
 	}
@@ -161,25 +159,25 @@ internal class GraphQLParser {
 	}
 
 	void VariableDefinitions() {
-		Expect(15);
+		Expect(13);
 		VariableDefinition();
-		while (la.kind == 3) {
+		while (la.kind == 20) {
 			VariableDefinition();
 		}
-		Expect(16);
+		Expect(14);
 	}
 
 	void Directives() {
-		Expect(2);
-		while (la.kind == 2) {
-			Get();
+		Directive();
+		while (la.kind == 22) {
+			Directive();
 		}
 	}
 
 	void Selection() {
 		if (la.kind == 1) {
 			Field();
-		} else if (la.kind == 13) {
+		} else if (la.kind == 11) {
 			Get();
 			FragmentSpread();
 			InlineFragment();
@@ -188,28 +186,28 @@ internal class GraphQLParser {
 
 	void Field() {
 		FieldName();
-		if (la.kind == 15) {
+		if (la.kind == 13) {
 			Arguments();
 		}
-		if (la.kind == 2) {
+		if (la.kind == 22) {
 			Directives();
 		}
-		if (la.kind == 11) {
+		if (la.kind == 9) {
 			SelectionSet();
 		}
 	}
 
 	void FragmentSpread() {
 		FragmentName();
-		if (la.kind == 2) {
+		if (la.kind == 22) {
 			Directives();
 		}
 	}
 
 	void InlineFragment() {
-		Expect(17);
+		Expect(15);
 		NamedType();
-		if (la.kind == 2) {
+		if (la.kind == 22) {
 			Directives();
 		}
 		SelectionSet();
@@ -217,54 +215,54 @@ internal class GraphQLParser {
 
 	void FieldName() {
 		Expect(1);
-		if (la.kind == 14) {
+		if (la.kind == 12) {
 			Get();
 			Expect(1);
 		}
 	}
 
 	void Arguments() {
-		Expect(15);
+		Expect(13);
 		Argument();
 		while (la.kind == 1) {
 			Argument();
 		}
-		Expect(16);
+		Expect(14);
 	}
 
 	void Argument() {
 		Expect(1);
-		Expect(14);
+		Expect(12);
 		Value();
 	}
 
 	void Value() {
 		switch (la.kind) {
-		case 4: {
+		case 2: {
 			Get();
-			break;
-		}
-		case 5: {
-			Get();
-			break;
-		}
-		case 6: case 7: {
-			Boolean();
 			break;
 		}
 		case 3: {
 			Get();
 			break;
 		}
+		case 4: case 5: {
+			Boolean();
+			break;
+		}
+		case 20: {
+			Variable();
+			break;
+		}
 		case 1: {
 			Enum();
 			break;
 		}
-		case 19: {
+		case 17: {
 			List();
 			break;
 		}
-		case 11: {
+		case 9: {
 			Object();
 			break;
 		}
@@ -281,11 +279,16 @@ internal class GraphQLParser {
 	}
 
 	void Boolean() {
-		if (la.kind == 6) {
+		if (la.kind == 4) {
 			Get();
-		} else if (la.kind == 7) {
+		} else if (la.kind == 5) {
 			Get();
 		} else SynErr(29);
+	}
+
+	void Variable() {
+		Expect(20);
+		Expect(1);
 	}
 
 	void Enum() {
@@ -293,33 +296,33 @@ internal class GraphQLParser {
 	}
 
 	void List() {
-		Expect(19);
+		Expect(17);
 		while (StartOf(2)) {
 			Value();
 		}
-		Expect(20);
+		Expect(18);
 	}
 
 	void Object() {
-		Expect(11);
+		Expect(9);
 		ObjectField();
 		while (la.kind == 1) {
 			ObjectField();
 		}
-		Expect(12);
+		Expect(10);
 	}
 
 	void ObjectField() {
 		Expect(1);
-		Expect(21);
+		Expect(19);
 		Value();
 	}
 
 	void VariableDefinition() {
-		Expect(3);
-		Expect(14);
+		Variable();
+		Expect(12);
 		Type();
-		if (la.kind == 21) {
+		if (la.kind == 19) {
 			Get();
 			Value();
 		}
@@ -328,21 +331,26 @@ internal class GraphQLParser {
 	void Type() {
 		if (la.kind == 1) {
 			NamedType();
-			if (la.kind == 22) {
+			if (la.kind == 21) {
 				Get();
 			}
-		} else if (la.kind == 19) {
+		} else if (la.kind == 17) {
 			ListType();
-			if (la.kind == 22) {
+			if (la.kind == 21) {
 				Get();
 			}
 		} else SynErr(30);
 	}
 
 	void ListType() {
-		Expect(19);
+		Expect(17);
 		Type();
-		Expect(20);
+		Expect(18);
+	}
+
+	void Directive() {
+		Expect(22);
+		Expect(1);
 	}
 
 
@@ -357,8 +365,8 @@ internal class GraphQLParser {
 	
 	static readonly bool[,] set = {
 		{T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x},
-		{x,x,x,x, x,x,x,x, x,T,T,T, x,x,x,x, x,x,T,x, x,x,x,x, x},
-		{x,T,x,T, T,T,T,T, x,x,x,T, x,x,x,x, x,x,x,T, x,x,x,x, x}
+		{x,x,x,x, x,x,x,T, T,T,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x},
+		{x,T,T,T, T,T,x,x, x,T,x,x, x,x,x,x, x,T,x,x, T,x,x,x, x}
 
 	};
 } // end Parser
@@ -370,27 +378,27 @@ internal class Errors {
 		switch (n) {
 			case 0: s = "EOF expected"; break;
 			case 1: s = "name expected"; break;
-			case 2: s = "directive expected"; break;
-			case 3: s = "variable expected"; break;
-			case 4: s = "string expected"; break;
-			case 5: s = "number expected"; break;
-			case 6: s = "true expected"; break;
-			case 7: s = "false expected"; break;
-			case 8: s = "null expected"; break;
-			case 9: s = "\"query\" expected"; break;
-			case 10: s = "\"mutation\" expected"; break;
-			case 11: s = "\"{\" expected"; break;
-			case 12: s = "\"}\" expected"; break;
-			case 13: s = "\"...\" expected"; break;
-			case 14: s = "\":\" expected"; break;
-			case 15: s = "\"(\" expected"; break;
-			case 16: s = "\")\" expected"; break;
-			case 17: s = "\"on\" expected"; break;
-			case 18: s = "\"fragment\" expected"; break;
-			case 19: s = "\"[\" expected"; break;
-			case 20: s = "\"]\" expected"; break;
-			case 21: s = "\"=\" expected"; break;
-			case 22: s = "\"!\" expected"; break;
+			case 2: s = "string expected"; break;
+			case 3: s = "number expected"; break;
+			case 4: s = "true expected"; break;
+			case 5: s = "false expected"; break;
+			case 6: s = "null expected"; break;
+			case 7: s = "\"query\" expected"; break;
+			case 8: s = "\"mutation\" expected"; break;
+			case 9: s = "\"{\" expected"; break;
+			case 10: s = "\"}\" expected"; break;
+			case 11: s = "\"...\" expected"; break;
+			case 12: s = "\":\" expected"; break;
+			case 13: s = "\"(\" expected"; break;
+			case 14: s = "\")\" expected"; break;
+			case 15: s = "\"on\" expected"; break;
+			case 16: s = "\"fragment\" expected"; break;
+			case 17: s = "\"[\" expected"; break;
+			case 18: s = "\"]\" expected"; break;
+			case 19: s = "\"=\" expected"; break;
+			case 20: s = "\"$\" expected"; break;
+			case 21: s = "\"!\" expected"; break;
+			case 22: s = "\"@\" expected"; break;
 			case 23: s = "??? expected"; break;
 			case 24: s = "invalid Definition"; break;
 			case 25: s = "invalid OperationDefinition"; break;

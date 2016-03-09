@@ -43,6 +43,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Schema\" />
     <Folder Include="Syntax\" />
   </ItemGroup>
   <ItemGroup>
