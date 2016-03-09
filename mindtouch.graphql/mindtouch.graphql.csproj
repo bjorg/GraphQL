@@ -46,7 +46,7 @@
     <Compile Include="Parser\Scanner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Schema\AGraphType.cs" />
-    <Compile Include="Schema\AGraphTypeScalar.cs" />
+    <Compile Include="Schema\GraphTypeScalar.cs" />
     <Compile Include="Schema\ANamedGraphType.cs" />
     <Compile Include="Schema\GraphType.cs" />
     <Compile Include="Schema\GraphTypeEnum.cs" />
