@@ -8,3 +8,4 @@
 *.suo
 _ReSharper.*/
 *.pdb
+/packages/
