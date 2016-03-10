@@ -35,7 +35,7 @@ CHARACTERS
 	letter = 'a'..'z'.
 	digit = '0'..'9'.
 	hex = digit + "abcdef".
-	quotechar  = ANY - '\'' - '\\'.
+	doublequotechar  = ANY - '"' - '\\'.
 	commentchar = ANY - '\r' - '\n'.
 
 TOKENS
@@ -43,11 +43,11 @@ TOKENS
 	name = ( underscore | letter ) { letter | digit | underscore }.
 		
 	string = 
-		"'" { 
-			quotechar
+		"\"" { 
+			doublequotechar
 			| "\\\'" | "\\\"" | "\\\\" | "\\/" | "\\a" | "\\b" | "\\f" | "\\n" | "\\r" | "\\t" | "\\v"
 			| "\\u" hex hex hex hex
-		} "'"
+		} "\""
 		.
 	
 	number =
@@ -155,7 +155,7 @@ PRODUCTIONS
 		| Variable
 		| Enum
 		| List
-		| Object
+		| InputObject
 		.
 
 	Enum =
@@ -166,11 +166,11 @@ PRODUCTIONS
 		"[" { Value } "]"
 		.
 
-	Object =
-		"{" ObjectField { ObjectField } "}"
+	InputObject =
+		"{" InputObjectField { InputObjectField } "}"
 		.
 
-	ObjectField =
+	InputObjectField =
 		name "=" Value
 		.
 

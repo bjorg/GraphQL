@@ -188,7 +188,7 @@ internal class Scanner {
 		for (int i = 95; i <= 95; ++i) start[i] = 1;
 		for (int i = 97; i <= 122; ++i) start[i] = 1;
 		for (int i = 48; i <= 57; ++i) start[i] = 24;
-		start[39] = 2; 
+		start[34] = 2; 
 		start[46] = 40; 
 		start[45] = 8; 
 		start[35] = 22; 
@@ -300,8 +300,8 @@ internal class Scanner {
 				if (ch >= '0' && ch <= '9' || ch == '_' || ch >= 'a' && ch <= 'z') {AddCh(); goto case 1;}
 				else {t.kind = 1; t.val = new String(tval, 0, tlen); CheckLiteral(); return t;}
 			case 2:
-				if (ch <= '&' || ch >= '(' && ch <= '[' || ch >= ']' && ch <= 65535) {AddCh(); goto case 2;}
-				else if (ch == 39) {AddCh(); goto case 7;}
+				if (ch <= '!' || ch >= '#' && ch <= '[' || ch >= ']' && ch <= 65535) {AddCh(); goto case 2;}
+				else if (ch == '"') {AddCh(); goto case 7;}
 				else if (ch == 92) {AddCh(); goto case 25;}
 				else {goto case 0;}
 			case 3:

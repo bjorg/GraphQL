@@ -263,7 +263,7 @@ internal class GraphQLParser {
 			break;
 		}
 		case 9: {
-			Object();
+			InputObject();
 			break;
 		}
 		default: SynErr(28); break;
@@ -303,16 +303,16 @@ internal class GraphQLParser {
 		Expect(18);
 	}
 
-	void Object() {
+	void InputObject() {
 		Expect(9);
-		ObjectField();
+		InputObjectField();
 		while (la.kind == 1) {
-			ObjectField();
+			InputObjectField();
 		}
 		Expect(10);
 	}
 
-	void ObjectField() {
+	void InputObjectField() {
 		Expect(1);
 		Expect(19);
 		Value();
