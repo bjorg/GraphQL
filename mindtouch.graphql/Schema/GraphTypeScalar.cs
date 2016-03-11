@@ -37,9 +37,7 @@ namespace MindTouch.GraphQL.Schema {
 
         //--- Constructors ---
         private GraphTypeScalar(string name, string description, Func<object, object> coerce) : base(BuildJsonType(GraphTypeKind.SCALAR, name: name, description: description)) {
-            if(name == null) {
-                throw new ArgumentNullException(nameof(name));
-            }
+            GraphUtils.Validate(name, nameof(name));
             if(coerce == null) {
                 throw new ArgumentNullException(nameof(coerce));
             }

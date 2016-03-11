@@ -20,31 +20,32 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace MindTouch.GraphQL.Schema {
 
     public sealed class GraphTypeSchema {
 
         //--- Fields ---
-        public readonly AGraphType[] Types;
-
+        public readonly ImmutableArray<AGraphType> Types;
         public readonly GraphTypeObject QueryType;
         public readonly GraphTypeObject MutationType;
-        public readonly GraphDirective[] Directives;
+        public readonly ImmutableArray<GraphDirective> Directives;
 
         //--- Constructors ---
-        public GraphTypeSchema(AGraphType[] types, GraphTypeObject queryType, GraphTypeObject mutationType, GraphDirective[] directives) {
-            AGraphType.ValidateArray(types, nameof(types));
+        public GraphTypeSchema(IEnumerable<AGraphType> types, GraphTypeObject queryType, GraphTypeObject mutationType, IEnumerable<GraphDirective> directives) {
+            AGraphType.Validate(types, nameof(types));
             if(queryType == null) {
                 throw new ArgumentNullException(nameof(queryType));
             }
             if(directives == null) {
                 throw new ArgumentNullException(nameof(directives));
             }
-            Types = types;
+            Types = types.ToImmutableArray();
             QueryType = queryType;
             MutationType = mutationType;
-            Directives = directives;
+            Directives = directives.ToImmutableArray();
         }
 
         //--- Methods ---

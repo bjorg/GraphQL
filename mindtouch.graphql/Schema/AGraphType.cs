@@ -21,6 +21,7 @@
 
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 
 namespace MindTouch.GraphQL.Schema {
 
@@ -45,9 +46,7 @@ namespace MindTouch.GraphQL.Schema {
 
         //--- Constructors ---
         public GraphObjectField(string name, string description, AGraphType type) {
-            if(name == null) {
-                throw new ArgumentNullException(nameof(name));
-            }
+            GraphUtils.Validate(name, nameof(name));
             if(type == null) {
                 throw new ArgumentNullException(nameof(type));
             }
@@ -69,23 +68,14 @@ namespace MindTouch.GraphQL.Schema {
     public abstract class AGraphType {
 
         //--- Class Methods ---
-        internal static void ValidateArray(Array value, string parameterName) {
-            if(value == null) {
-                throw new ArgumentNullException(parameterName);
-            }
-            if(value.Length == 0) {
-                throw new ArgumentException("array cannot be empty", parameterName);
-            }
-        }
-
         protected static JObject BuildJsonType(
             GraphTypeKind kind,
             string name = null,
             string description = null,
-            GraphObjectField[] fields = null,
+            IEnumerable<GraphObjectField> fields = null,
             // interfaces
-            GraphTypeObject[] possibleTypes = null,
-            GraphTypeEnum.Value[] enumValues = null,
+            IEnumerable<GraphTypeObject> possibleTypes = null,
+            IEnumerable<GraphTypeEnum.Value> enumValues = null,
             // input fields
             AGraphType ofType = null
         ) {
@@ -109,7 +99,7 @@ namespace MindTouch.GraphQL.Schema {
             case GraphTypeKind.OBJECT:
 
                 // add fields
-                ValidateArray(fields, nameof(fields));
+                GraphUtils.Validate(fields, nameof(fields));
                 foreach(var field in fields) {
                     jsonFields.Add(field.JsonType);
                 }
@@ -119,7 +109,7 @@ namespace MindTouch.GraphQL.Schema {
             case GraphTypeKind.INTERFACE:
 
                 // add fields
-                ValidateArray(fields, nameof(fields));
+                GraphUtils.Validate(fields, nameof(fields));
                 foreach(var field in fields) {
                     jsonFields.Add(field.JsonType);
                 }
@@ -145,7 +135,7 @@ namespace MindTouch.GraphQL.Schema {
                 result.Add("possibleTypes", jsonPossibleTypes);
                 break;
             case GraphTypeKind.ENUM:
-                ValidateArray(enumValues, nameof(enumValues));
+                GraphUtils.Validate(enumValues, nameof(enumValues));
 
                 // add enum values
                 var jsonEnumValues = new JArray();

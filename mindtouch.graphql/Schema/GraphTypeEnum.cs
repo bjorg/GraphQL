@@ -21,6 +21,8 @@
 
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace MindTouch.GraphQL.Schema {
 
@@ -38,9 +40,7 @@ namespace MindTouch.GraphQL.Schema {
 
             //--- Constructors ---
             public Value(string name, string description, bool isDeprecated = false, string deprecationReason = null) {
-                if(name == null) {
-                    throw new ArgumentNullException(nameof(name));
-                }
+                GraphUtils.Validate(name, nameof(name));
                 Name = name;
                 Description = description;
                 IsDeprecated = isDeprecated;
@@ -59,12 +59,12 @@ namespace MindTouch.GraphQL.Schema {
         }
 
         //--- Fields ---
-        public readonly Value[] Values;
+        public readonly ImmutableArray<Value> Values;
 
         //--- Methods ---
-        public GraphTypeEnum(string name, string description, Value[] values) : base(name, BuildJsonType(GraphTypeKind.ENUM, name, description, enumValues: values)) {
-            ValidateArray(values, nameof(values));
-            Values = values;
+        public GraphTypeEnum(string name, string description, IEnumerable<Value> values) : base(name, BuildJsonType(GraphTypeKind.ENUM, name, description, enumValues: values)) {
+            Validate(values, nameof(values));
+            Values = values.ToImmutableArray();
         }
 
         //--- Methods ---
