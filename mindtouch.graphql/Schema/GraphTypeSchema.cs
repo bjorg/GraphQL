@@ -35,7 +35,7 @@ namespace MindTouch.GraphQL.Schema {
 
         //--- Constructors ---
         public GraphTypeSchema(IEnumerable<AGraphType> types, GraphTypeObject queryType, GraphTypeObject mutationType, IEnumerable<GraphDirective> directives) {
-            AGraphType.Validate(types, nameof(types));
+            GraphUtils.Validate(types, nameof(types));
             if(queryType == null) {
                 throw new ArgumentNullException(nameof(queryType));
             }

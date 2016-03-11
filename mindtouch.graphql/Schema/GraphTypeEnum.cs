@@ -63,7 +63,7 @@ namespace MindTouch.GraphQL.Schema {
 
         //--- Methods ---
         public GraphTypeEnum(string name, string description, IEnumerable<Value> values) : base(name, BuildJsonType(GraphTypeKind.ENUM, name, description, enumValues: values)) {
-            Validate(values, nameof(values));
+            GraphUtils.Validate(values, nameof(values));
             Values = values.ToImmutableArray();
         }
 

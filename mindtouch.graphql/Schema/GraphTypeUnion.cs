@@ -32,7 +32,7 @@ namespace MindTouch.GraphQL.Schema {
 
         //--- Constructors ---
         public GraphTypeUnion(string name, string description, IEnumerable<GraphTypeObject> possibleTypes) : base(name, BuildJsonType(GraphTypeKind.UNION, name, description, possibleTypes: possibleTypes)) {
-            Validate(possibleTypes, nameof(possibleTypes));
+            GraphUtils.Validate(possibleTypes, nameof(possibleTypes));
             PossibleTypes = possibleTypes.ToImmutableArray();
         }
 
