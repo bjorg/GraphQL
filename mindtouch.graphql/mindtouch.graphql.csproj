@@ -63,7 +63,7 @@
     <Compile Include="Schema\GraphTypeUnion.cs" />
     <Compile Include="Schema\GraphUtils.cs" />
     <Compile Include="Syntax\AGraphSyntaxSelection.cs" />
-    <Compile Include="Syntax\ASyntaxGraphValue.cs" />
+    <Compile Include="Syntax\AGraphSyntaxValue.cs" />
     <Compile Include="Syntax\GraphSyntaxArgument.cs" />
     <Compile Include="Syntax\GraphSyntaxDirective.cs" />
     <Compile Include="Syntax\GraphSyntaxSelectionSet.cs" />
