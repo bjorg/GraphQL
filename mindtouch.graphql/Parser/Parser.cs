@@ -239,11 +239,11 @@ internal class GraphQLParser {
 	void Value() {
 		switch (la.kind) {
 		case 2: {
-			Get();
+			String();
 			break;
 		}
 		case 3: {
-			Get();
+			Number();
 			break;
 		}
 		case 4: case 5: {
@@ -284,6 +284,14 @@ internal class GraphQLParser {
 		} else if (la.kind == 5) {
 			Get();
 		} else SynErr(29);
+	}
+
+	void String() {
+		Expect(2);
+	}
+
+	void Number() {
+		Expect(3);
 	}
 
 	void Variable() {
@@ -351,6 +359,9 @@ internal class GraphQLParser {
 	void Directive() {
 		Expect(22);
 		Expect(1);
+		if (la.kind == 13) {
+			Arguments();
+		}
 	}
 
 

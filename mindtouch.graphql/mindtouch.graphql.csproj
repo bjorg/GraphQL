@@ -62,10 +62,14 @@
     <Compile Include="Schema\GraphTypeSchema.cs" />
     <Compile Include="Schema\GraphTypeUnion.cs" />
     <Compile Include="Schema\GraphUtils.cs" />
+    <Compile Include="Syntax\AGraphSyntaxSelection.cs" />
+    <Compile Include="Syntax\ASyntaxGraphValue.cs" />
+    <Compile Include="Syntax\GraphSyntaxArgument.cs" />
+    <Compile Include="Syntax\GraphSyntaxDirective.cs" />
+    <Compile Include="Syntax\GraphSyntaxSelectionSet.cs" />
+    <Compile Include="Syntax\GraphSyntaxTypeName.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Syntax\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Parser\GraphQL.atg" />

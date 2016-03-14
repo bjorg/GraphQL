@@ -149,13 +149,21 @@ PRODUCTIONS
 		.
 
 	Value =
-		string
-		| number
+		String
+		| Number
 		| Boolean
 		| Variable
 		| Enum
 		| List
 		| InputObject
+		.
+
+	String =
+		string
+		.
+
+	Number =
+		number
 		.
 
 	Enum =
@@ -204,7 +212,7 @@ PRODUCTIONS
 		.
 
 	Directive =
-		"@" name
+		"@" name [ Arguments ]
 		.
 
 END GraphQL.
