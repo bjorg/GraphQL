@@ -22,7 +22,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Sandbox {
+namespace Sandbox.Logic {
 
     internal class UserBE {
 
@@ -53,27 +53,62 @@ namespace Sandbox {
     }
 
     internal interface IQuerySource {
-        Task<PageBE> GetPageById(int id);
-        Task<UserBE> GetUserById(int id);
+        Task<string> GetPageTitle(int id);
+        Task<DateTime> GetPageModified(int id);
+        Task<int> GetPageAuthorId(int id);
+        Task<string> GetUserName(int id);
+        Task<DateTime> GetUserCreated(int id);
     }
 
     internal sealed class ImmediateQuerySource : IQuerySource {
 
-        public Task<PageBE> GetPageById(int id) {
+        public Task<string> GetPageTitle(int id) {
+            Console.WriteLine($"{nameof(GetPageTitle)}({id})");
             switch(id) {
             case 1:
-                return Task.FromResult(new PageBE(1, "Page Title", DateTime.Today.ToUniversalTime(), 42, DateTime.Now.ToUniversalTime()));
+                return Task.FromResult("Page Title");
             default:
-                return Task.FromException<PageBE>(new ArgumentException("page not found"));
+                return Task.FromException<string>(new ArgumentException($"page {id} not found"));
             }
         }
 
-        public Task<UserBE> GetUserById(int id) {
+        public Task<DateTime> GetPageModified(int id) {
+            Console.WriteLine($"{nameof(GetPageModified)}({id})");
+            switch(id) {
+            case 1:
+                return Task.FromResult(new DateTime(2010, 3, 31, 17, 23, 00));
+            default:
+                return Task.FromException<DateTime>(new ArgumentException($"page {id} not found"));
+            }
+        }
+
+        public Task<int> GetPageAuthorId(int id) {
+            Console.WriteLine($"{nameof(GetPageAuthorId)}({id})");
+            switch(id) {
+            case 1:
+                return Task.FromResult(42);
+            default:
+                return Task.FromException<int>(new ArgumentException($"page {id} not found"));
+            }
+        }
+
+        public Task<string> GetUserName(int id) {
+            Console.WriteLine($"{nameof(GetUserName)}({id})");
             switch(id) {
             case 42:
-                return Task.FromResult(new UserBE("John Doe", DateTime.Today.AddHours(12).ToUniversalTime()));
+                return Task.FromResult("John Doe");
             default:
-                return Task.FromException<UserBE>(new ArgumentException("user not found"));
+                return Task.FromException<string>(new ArgumentException($"user {id} not found"));
+            }
+        }
+
+        public Task<DateTime> GetUserCreated(int id) {
+            Console.WriteLine($"{nameof(GetUserCreated)}({id})");
+            switch(id) {
+            case 42:
+                return Task.FromResult(new DateTime(1972, 9, 23, 16, 00, 00));
+            default:
+                return Task.FromException<DateTime>(new ArgumentException($"user {id} not found"));
             }
         }
     }

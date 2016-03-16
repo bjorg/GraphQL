@@ -27,11 +27,11 @@ namespace Sandbox {
     public static class TaskEx {
 
         //--- Methods ---
-        public static Task<Tuple<T1, T2>> Tuple<T1, T2>(Task<T1> first, Task<T2> second) {
+        public static Task<Tuple<T1, T2>> ContinueWithTuple<T1, T2>(Task<T1> first, Task<T2> second) {
             return Task.WhenAll(first, second).ContinueWith(_ => new Tuple<T1, T2>(first.Result, second.Result));
         }
 
-        public static Task<Tuple<T1, T2, T3>> Tuple<T1, T2, T3>(Task<T1> first, Task<T2> second, Task<T3> third) {
+        public static Task<Tuple<T1, T2, T3>> ContinueWithTuple<T1, T2, T3>(Task<T1> first, Task<T2> second, Task<T3> third) {
             return Task.WhenAll(first, second, third).ContinueWith(_ => new Tuple<T1, T2, T3>(first.Result, second.Result, third.Result));
         }
 
