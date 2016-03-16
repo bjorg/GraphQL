@@ -91,7 +91,7 @@ namespace Sandbox.Queries {
             if(_nested.Any()) {
 
                 // we have all nested query sources (which will be used to aggregate queries)
-                Task.WhenAll(_queries.Select(query => query.Value)).ContinueWith(_ => Task.WhenAll(_nested).ContinueWith(__ => {
+                Task.WhenAll(_queries.Select(query => query.Value)).ContinueWith(_ => Task.WhenAll(_nested)).Unwrap().ContinueWith(_ => {
                     var queries = _nested.SelectMany(nested => nested.Result).ToArray();
                     Console.WriteLine($"execute generation {_generation}: START ({queries.Length})");
                     foreach(var query in queries) {
@@ -99,7 +99,7 @@ namespace Sandbox.Queries {
                         query.Value.Start();
                     }
                     Console.WriteLine($"execute generation {_generation}: DONE");
-                }));
+                });
             }
         }
 
