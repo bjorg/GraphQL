@@ -20,26 +20,10 @@
  */
 
 using Newtonsoft.Json;
-using Sandbox.Logic;
 using Sandbox.Queries;
 using System;
-using System.Threading.Tasks;
 
 namespace Sandbox {
-
-    internal sealed class QueryRunner<TQuery> {
-
-        //--- Fields ---
-        private readonly TQuery _query;
-
-        //--- Constructors ---
-        public QueryRunner(TQuery query) {
-            _query = query;
-        }
-
-        //--- Methods ---
-        public Task<T> Query<T>(Func<TQuery, Task<T>> selection) => selection(_query);
-    }
 
     internal class Program {
 
@@ -65,7 +49,7 @@ namespace Sandbox {
                 }
             }
             */
-            var runner = new QueryRunner<IRootQuery>(new RootQuery(new ImmediateQuerySource()));
+            var runner = new QueryRunner();
             var doc = runner.Query(root => root.Page(1, page => TaskEx.WhenAllToTuple(page.Title(), page.Modified(), page.Author(user => user.Name().Then(name => new {
                 Name = name
             })), page.Subpages(subpage => subpage.Title().Then(title => new { Title = title }))).Then(tuple => new {

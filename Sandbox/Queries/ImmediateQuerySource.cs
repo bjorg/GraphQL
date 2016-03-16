@@ -19,46 +19,20 @@
  * limitations under the License.
  */
 
+using Newtonsoft.Json;
+using Sandbox.Entities;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
-namespace Sandbox.Logic {
+namespace Sandbox.Queries {
 
-    internal class UserBE {
+    internal interface IQuerySource : IDisposable {
 
-        public readonly int Id;
-        public readonly string Name;
-        public readonly DateTime Created;
-
-        public UserBE(int id, string name, DateTime created) {
-            Id = id;
-            Name = name;
-            Created = created;
-        }
-    }
-
-    internal class PageBE {
-
-        public readonly int Id;
-        public readonly string Title;
-        public readonly int AuthorId;
-        public readonly DateTime Created;
-        public readonly DateTime Modified;
-        public readonly ImmutableArray<int> Subpages;
-
-        public PageBE(int id, string title, DateTime created, int authorId, DateTime modified, IEnumerable<int> subpages) {
-            Id = id;
-            Title = title;
-            Created = created;
-            AuthorId = authorId;
-            Modified = modified;
-            Subpages = subpages.ToImmutableArray();
-        }
-    }
-
-    internal interface IQuerySource {
+        //--- Methods ---
+        IQuerySource New();
         Task<string> GetPageTitle(int id);
         Task<DateTime> GetPageCreated(int id);
         Task<DateTime> GetPageModified(int id);
@@ -70,10 +44,12 @@ namespace Sandbox.Logic {
 
     internal sealed class ImmediateQuerySource : IQuerySource {
 
-        private readonly Dictionary<int, PageBE> _pages;
-        private readonly Dictionary<int, UserBE> _users;
+        //--- Class Fields ---
+        private static readonly Dictionary<int, PageBE> _pages;
+        private static readonly Dictionary<int, UserBE> _users;
 
-        public ImmediateQuerySource() {
+        //--- Class Constructor ---
+        static ImmediateQuerySource() {
             _pages = new Dictionary<int, PageBE> {
                 { 1, new PageBE(1, "Homepage", new DateTime(2010, 3, 31, 17, 23, 00), 42, new DateTime(2016, 2, 27, 11, 35, 00), new[] { 2, 3, 4 }) },
                 { 2, new PageBE(2, "Subpage 1", new DateTime(2010, 3, 31, 17, 23, 01), 13, new DateTime(2016, 2, 27, 11, 35, 01), new int[0]) },
@@ -86,9 +62,51 @@ namespace Sandbox.Logic {
             };
         }
 
+        //--- Fields ---
+        private readonly int _generation;
+        private readonly TaskCompletionSource<IEnumerable<KeyValuePair<string, Task>>> _completion;
+        private readonly List<KeyValuePair<string, Task>> _queries = new List<KeyValuePair<string, Task>>();
+        private readonly List<Task<IEnumerable<KeyValuePair<string, Task>>>> _nested = new List<Task<IEnumerable<KeyValuePair<string, Task>>>>();
+
+        //--- Constructors ---
+        public ImmediateQuerySource(int generation, TaskCompletionSource<IEnumerable<KeyValuePair<string, Task>>> completion) {
+            _generation = generation;
+            _completion = completion;
+        }
+
+        //--- Methods ---
+        public IQuerySource New() {
+            var completion = new TaskCompletionSource<IEnumerable<KeyValuePair<string, Task>>>();
+            var result = new ImmediateQuerySource(_generation + 1, completion);
+            _nested.Add(completion.Task);
+            return result;
+        }
+
+        public void Dispose() {
+
+            // let parent know to execute our queries
+            _completion.SetResult(_queries);
+
+            // when our queries have run, we can run the nested queries
+            if(_nested.Any()) {
+
+                // we have all nested query sources (which will be used to aggregate queries)
+                Task.WhenAll(_queries.Select(query => query.Value)).ContinueWith(_ => Task.WhenAll(_nested).ContinueWith(__ => {
+                    var queries = _nested.SelectMany(nested => nested.Result).ToArray();
+                    Console.WriteLine($"execute generation {_generation}: START ({queries.Length})");
+                    foreach(var query in queries) {
+                        Console.WriteLine($"[{_generation}] RUN: {query.Key}");
+                        query.Value.Start();
+                    }
+                    Console.WriteLine($"execute generation {_generation}: DONE");
+                }));
+            }
+        }
+
         public Task<string> GetPageTitle(int id) {
-            return Task.Run(() => {
-                Console.WriteLine($"{nameof(GetPageTitle)}({id})");
+            Log("adding", new { id });
+            return Run(() => {
+                Log("running" ,new { id });
                 PageBE page;
                 if(!_pages.TryGetValue(id, out page)) {
                     throw new ArgumentException($"page {id} not found");
@@ -98,8 +116,9 @@ namespace Sandbox.Logic {
         }
 
         public Task<DateTime> GetPageCreated(int id) {
-            return Task.Run(() => {
-                Console.WriteLine($"{nameof(GetPageCreated)}({id})");
+            Log("adding", new { id });
+            return Run(() => {
+                Log("running", new { id });
                 PageBE page;
                 if(!_pages.TryGetValue(id, out page)) {
                     throw new ArgumentException($"page {id} not found");
@@ -109,8 +128,9 @@ namespace Sandbox.Logic {
         }
 
         public Task<DateTime> GetPageModified(int id) {
-            return Task.Run(() => {
-                Console.WriteLine($"{nameof(GetPageModified)}({id})");
+            Log("adding", new { id });
+            return Run(() => {
+                Log("running", new { id });
                 PageBE page;
                 if(!_pages.TryGetValue(id, out page)) {
                     throw new ArgumentException($"page {id} not found");
@@ -120,8 +140,9 @@ namespace Sandbox.Logic {
         }
 
         public Task<int> GetPageAuthorId(int id) {
-            return Task.Run(() => {
-                Console.WriteLine($"{nameof(GetPageAuthorId)}({id})");
+            Log("adding", new { id });
+            return Run(() => {
+                Log("running", new { id });
                 PageBE page;
                 if(!_pages.TryGetValue(id, out page)) {
                     throw new ArgumentException($"page {id} not found");
@@ -131,8 +152,9 @@ namespace Sandbox.Logic {
         }
 
         public Task<IEnumerable<int>> GetPageSubpages(int id) {
-            return Task.Run(() => {
-                Console.WriteLine($"{nameof(GetPageSubpages)}({id})");
+            Log("adding", new { id });
+            return Run(() => {
+                Log("running", new { id });
                 PageBE page;
                 if(!_pages.TryGetValue(id, out page)) {
                     throw new ArgumentException($"page {id} not found");
@@ -142,8 +164,9 @@ namespace Sandbox.Logic {
         }
 
         public Task<string> GetUserName(int id) {
-            return Task.Run(() => {
-                Console.WriteLine($"{nameof(GetUserName)}({id})");
+            Log("adding", new { id });
+            return Run(() => {
+                Log("running", new { id });
                 UserBE user;
                 if(!_users.TryGetValue(id, out user)) {
                     throw new ArgumentException($"user {id} not found");
@@ -153,14 +176,26 @@ namespace Sandbox.Logic {
         }
 
         public Task<DateTime> GetUserCreated(int id) {
-            return Task.Run(() => {
-                Console.WriteLine($"{nameof(GetUserCreated)}({id})");
+            Log("adding", new { id });
+            return Run(() => {
+                Log("running", new { id });
                 UserBE user;
                 if(!_users.TryGetValue(id, out user)) {
                     throw new ArgumentException($"user {id} not found");
                 }
                 return user.Created;
             });
+        }
+
+        private Task<T> Run<T>(Func<T> function, [CallerMemberName] string method = "<missing>") {
+            var result = new Task<T>(function);
+            _queries.Add(new KeyValuePair<string, Task>(method, result));
+            return result;
+        }
+
+        private void Log(string action, object arguments, [CallerMemberName] string method = "<missing>") {
+            var args = (arguments != null) ? JsonConvert.SerializeObject(arguments) : "";
+            Console.WriteLine($"[{_generation}] {action} {method}({args})");
         }
     }
 }

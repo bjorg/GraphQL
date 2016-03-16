@@ -52,8 +52,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Entities\PageBE.cs" />
+    <Compile Include="Entities\UserBE.cs" />
     <Compile Include="Queries\Queries.cs" />
-    <Compile Include="Logic\ImmediateQuerySource.cs" />
+    <Compile Include="Queries\ImmediateQuerySource.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TaskEx.cs" />

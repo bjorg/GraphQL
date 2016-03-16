@@ -39,12 +39,20 @@ namespace Sandbox {
             return Task.WhenAll(first, second, third, fourth).ContinueWith(_ => new Tuple<T1, T2, T3, T4>(first.Result, second.Result, third.Result, fourth.Result));
         }
 
-        public static Task<TResult> Then<TSource, TResult>(this Task<TSource> task, Func<TSource, TResult> convert) {
-            return task.ContinueWith(t => convert(t.Result));
+        public static Task<TResult> Then<TSource, TResult>(this Task<TSource> task, Func<TSource, TResult> convert, IDisposable disposable = null) {
+            try {
+                return task.ContinueWith(t => convert(t.Result));
+            } finally {
+                disposable?.Dispose();
+            }
         }
 
-        public static Task<TResult> Then<TSource, TResult>(this Task<TSource> task, Func<TSource, Task<TResult>> convert) {
-            return task.ContinueWith(t => convert(t.Result)).Unwrap();
+        public static Task<TResult> Then<TSource, TResult>(this Task<TSource> task, Func<TSource, Task<TResult>> convert, IDisposable disposable = null) {
+            try {
+                return task.ContinueWith(t => convert(t.Result)).Unwrap();
+            } finally {
+                disposable?.Dispose();
+            }
         }
     }
 }
