@@ -59,16 +59,20 @@ namespace Sandbox {
                     author {
                         name
                     }
+                    subpages {
+                        title
+                    }
                 }
             }
             */
             var runner = new QueryRunner<IRootQuery>(new RootQuery(new ImmediateQuerySource()));
-            var doc = runner.Query(root => root.Page(1, page => TaskEx.ContinueWithTuple(page.Title(), page.Modified(), page.Author(user => user.Name().Then(name => new {
+            var doc = runner.Query(root => root.Page(1, page => TaskEx.WhenAllToTuple(page.Title(), page.Modified(), page.Author(user => user.Name().Then(name => new {
                 Name = name
-            }))).Then(tuple => new {
+            })), page.Subpages(subpage => subpage.Title().Then(title => new { Title = title }))).Then(tuple => new {
                 Title = tuple.Item1,
                 Modified = tuple.Item2,
-                Author = tuple.Item3
+                Author = tuple.Item3,
+                Subpages = tuple.Item4
             })).Then(data => new {
                 Data = data
             }));

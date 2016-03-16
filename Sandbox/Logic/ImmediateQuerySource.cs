@@ -28,10 +28,12 @@ namespace Sandbox.Logic {
 
     internal class UserBE {
 
+        public readonly int Id;
         public readonly string Name;
         public readonly DateTime Created;
 
-        public UserBE(string name, DateTime created) {
+        public UserBE(int id, string name, DateTime created) {
+            Id = id;
             Name = name;
             Created = created;
         }
@@ -79,8 +81,8 @@ namespace Sandbox.Logic {
                 { 4, new PageBE(4, "Subpage 3", new DateTime(2010, 3, 31, 17, 23, 03), 13, new DateTime(2016, 2, 27, 11, 35, 03), new int[0]) }
             };
             _users = new Dictionary<int, UserBE> {
-                { 13, new UserBE("Jane Doe", new DateTime(1976, 04, 31, 11, 00, 00)) },
-                { 42, new UserBE("John Doe", new DateTime(1972, 09, 23, 16, 00, 00)) }
+                { 13, new UserBE(13, "Jane Doe", new DateTime(1976, 04, 30, 11, 00, 00)) },
+                { 42, new UserBE(42, "John Doe", new DateTime(1972, 09, 23, 16, 00, 00)) }
             };
         }
 

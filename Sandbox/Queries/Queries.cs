@@ -1,5 +1,6 @@
 using Sandbox.Logic;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Sandbox.Queries {
@@ -31,6 +32,7 @@ namespace Sandbox.Queries {
         Task<string> Title();
         Task<DateTime> Modified();
         Task<T> Author<T>(Func<IUserQuery, Task<T>> selection);
+        Task<T[]> Subpages<T>(Func<IPageQuery, Task<T>> selection);
     }
 
     internal sealed class PageQuery : IPageQuery {
@@ -49,6 +51,7 @@ namespace Sandbox.Queries {
         public Task<string> Title() => _source.GetPageTitle(_pageId);
         public Task<DateTime> Modified() => _source.GetPageModified(_pageId);
         public Task<T> Author<T>(Func<IUserQuery, Task<T>> selection) => _source.GetPageAuthorId(_pageId).Then(authorId => selection(new UserQuery(_source, authorId)));
+        public Task<T[]> Subpages<T>(Func<IPageQuery, Task<T>> selection) => _source.GetPageSubpages(_pageId).Then(ids => Task.WhenAll(ids.Select(id => selection(new PageQuery(_source, id)))));
     }
 
     internal interface IUserQuery {
