@@ -20,7 +20,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -30,13 +29,11 @@ namespace Sandbox.Queries {
 
         //--- Fields ---
         private readonly IQuerySource _source;
-        private readonly Task<IEnumerable<KeyValuePair<string, Task>>> _done;
 
         //--- Constructors ---
         public QueryRunner() {
-            var completion = new TaskCompletionSource<IEnumerable<KeyValuePair<string, Task>>>();
-            _source = new ImmediateQuerySource(0, completion);
-            _done = completion.Task;
+            var scheduler = new QueryScheduler();
+            _source = new ImmediateQuerySource(0, scheduler);
         }
 
         //--- Methods ---
@@ -45,15 +42,6 @@ namespace Sandbox.Queries {
             using(_source) {
                 result = selection(new RootQuery(_source));
             }
-            _done.ContinueWith(done => {
-                var queries = done.Result.ToArray();
-                Console.WriteLine($"execute generation RUNNER: START ({queries.Length})");
-                foreach(var query in queries) {
-                    Console.WriteLine($"[RUNNER] RUN: {query.Key}");
-                    query.Value.Start();
-                }
-                Console.WriteLine($"execute generation RUNNER: DONE");
-            });
             return result;
         }
     }
@@ -76,15 +64,11 @@ namespace Sandbox.Queries {
 
         //--- Methods ---
         public Task<T> Page<T>(int id, Func<IPageQuery, Task<T>> selection) {
-            using(var source = _source.New()) {
-                return selection(new PageQuery(source, id));
-            }
+            return selection(new PageQuery(_source, id));
         }
 
         public Task<T> User<T>(int id, Func<IUserQuery, Task<T>> selection) {
-            using(var source = _source.New()) {
-                return selection(new UserQuery(source, id));
-            }
+            return selection(new UserQuery(_source, id));
         }
     }
 
@@ -127,6 +111,7 @@ namespace Sandbox.Queries {
     internal interface IUserQuery {
 
         //--- Methods ---
+        Task<int> Id();
         Task<string> Name();
         Task<DateTime> Created();
     }
@@ -144,6 +129,7 @@ namespace Sandbox.Queries {
         }
 
         //--- Methods ---
+        public Task<int> Id() => Task.FromResult(_userId);
         public Task<string> Name() => _source.GetUserName(_userId);
         public Task<DateTime> Created() => _source.GetUserCreated(_userId);
     }

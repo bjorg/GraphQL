@@ -23,7 +23,6 @@ using Newtonsoft.Json;
 using Sandbox.Entities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -40,6 +39,64 @@ namespace Sandbox.Queries {
         Task<IEnumerable<int>> GetPageSubpages(int id);
         Task<string> GetUserName(int id);
         Task<DateTime> GetUserCreated(int id);
+    }
+
+    internal sealed class QueryScheduler {
+
+        //--- Fields ---
+        private readonly Dictionary<int, int> _counters = new Dictionary<int, int>();
+        private readonly Dictionary<int, List<Task>> _tasks = new Dictionary<int, List<Task>>();
+
+        //--- Methods ---
+        public void Begin(int generation) {
+            lock (_counters) {
+                int counter;
+                if(!_counters.TryGetValue(generation, out counter)) {
+                    _tasks[generation] = new List<Task>();
+                }
+                _counters[generation] = ++counter;
+                Console.WriteLine($"new generation {generation}(count: {counter})");
+            }
+        }
+
+        public Task<T> Add<T>(int generation, Func<T> function) {
+            var result = new Task<T>(function);
+            lock(_counters) {
+                var tasks = _tasks[generation];
+                tasks.Add(result);
+            }
+            return result;
+        }
+
+        public void End(int generation) {
+            List<Task> tasks = null;
+            lock(_counters) {
+                int counter;
+                if(_counters.TryGetValue(generation, out counter)) {
+                    switch(counter) {
+                    case 0:
+                        throw new InvalidOperationException("counter is 0");
+                    case 1:
+                        _counters.Remove(generation);
+                        tasks = _tasks[generation];
+                        _tasks.Remove(generation);
+                        --counter;
+                        break;
+                    default:
+                        _counters[generation] = --counter;
+                        break;
+                    }
+                    Console.WriteLine($"end generation {generation}(count: {counter})");
+                } else {
+                    throw new InvalidOperationException("counter not found");
+                }
+            }
+            if(tasks != null) {
+                foreach(var task in tasks) {
+                    task.Start();
+                }
+            }
+        }
     }
 
     internal sealed class ImmediateQuerySource : IQuerySource {
@@ -64,43 +121,22 @@ namespace Sandbox.Queries {
 
         //--- Fields ---
         private readonly int _generation;
-        private readonly TaskCompletionSource<IEnumerable<KeyValuePair<string, Task>>> _completion;
-        private readonly List<KeyValuePair<string, Task>> _queries = new List<KeyValuePair<string, Task>>();
-        private readonly List<Task<IEnumerable<KeyValuePair<string, Task>>>> _nested = new List<Task<IEnumerable<KeyValuePair<string, Task>>>>();
+        private readonly QueryScheduler _scheduler;
 
         //--- Constructors ---
-        public ImmediateQuerySource(int generation, TaskCompletionSource<IEnumerable<KeyValuePair<string, Task>>> completion) {
+        public ImmediateQuerySource(int generation, QueryScheduler scheduler) {
+            _scheduler = scheduler;
             _generation = generation;
-            _completion = completion;
+            _scheduler.Begin(_generation);
         }
 
         //--- Methods ---
         public IQuerySource New() {
-            var completion = new TaskCompletionSource<IEnumerable<KeyValuePair<string, Task>>>();
-            var result = new ImmediateQuerySource(_generation + 1, completion);
-            _nested.Add(completion.Task);
-            return result;
+            return new ImmediateQuerySource(_generation + 1, _scheduler);
         }
 
         public void Dispose() {
-
-            // let parent know to execute our queries
-            _completion.SetResult(_queries);
-
-            // when our queries have run, we can run the nested queries
-            if(_nested.Any()) {
-
-                // we have all nested query sources (which will be used to aggregate queries)
-                Task.WhenAll(_queries.Select(query => query.Value)).ContinueWith(_ => Task.WhenAll(_nested)).Unwrap().ContinueWith(_ => {
-                    var queries = _nested.SelectMany(nested => nested.Result).ToArray();
-                    Console.WriteLine($"execute generation {_generation}: START ({queries.Length})");
-                    foreach(var query in queries) {
-                        Console.WriteLine($"[{_generation}] RUN: {query.Key}");
-                        query.Value.Start();
-                    }
-                    Console.WriteLine($"execute generation {_generation}: DONE");
-                });
-            }
+            _scheduler.End(_generation);
         }
 
         public Task<string> GetPageTitle(int id) {
@@ -188,9 +224,11 @@ namespace Sandbox.Queries {
         }
 
         private Task<T> Run<T>(Func<T> function, [CallerMemberName] string method = "<missing>") {
-            var result = new Task<T>(function);
-            _queries.Add(new KeyValuePair<string, Task>(method, result));
-            return result;
+#if false
+            return _scheduler.Add(_generation, function);
+#else
+            return Task.Run(function);
+#endif
         }
 
         private void Log(string action, object arguments, [CallerMemberName] string method = "<missing>") {
