@@ -27,37 +27,68 @@ using System.Threading.Tasks;
 
 namespace Sandbox.Queries {
 
-    internal sealed class ImmediateQuerySource : IQuerySource {
+    internal sealed class FieldBasedQuerySource : IQuerySource {
 
         //--- Types ---
+        private enum Source {
+            PAGES,
+            USERS
+        }
+
+        private class Request {
+
+            //--- Fields ---
+            public readonly Source Source;
+            public readonly int Key;
+            public readonly string Field;
+
+            //--- Constructors ---
+            public Request(Source source, int key, string field) {
+                Source = source;
+                Key = key;
+                Field = field;
+            }
+        }
+
+        private struct Row {
+
+            //--- Methods ---
+            public readonly Dictionary<string, object> Fields;
+
+            //--- Constructors ---
+            public Row(Dictionary<string, object> fields) {
+                Fields = fields;
+            }
+        }
+
         private sealed class Scheduler {
 
             //--- Fields ---
             private readonly Dictionary<int, int> _counters = new Dictionary<int, int>();
-            private readonly Dictionary<int, List<Task>> _tasks = new Dictionary<int, List<Task>>();
+            private readonly Dictionary<int, List<Tuple<Request, TaskCompletionSource<object>>>> _requests = new Dictionary<int, List<Tuple<Request, TaskCompletionSource<object>>>>();
 
             //--- Methods ---
             public void Begin(int generation) {
                 lock (_counters) {
                     int counter;
                     if(!_counters.TryGetValue(generation, out counter)) {
-                        _tasks[generation] = new List<Task>();
+                        _requests[generation] = new List<Tuple<Request, TaskCompletionSource<object>>>();
                     }
                     _counters[generation] = ++counter;
                 }
             }
 
-            public Task<T> Add<T>(int generation, Func<T> function) {
-                var result = new Task<T>(function);
+            public Task<object> Add(int generation, Request request) {
+                var completion = new TaskCompletionSource<object>();
                 lock (_counters) {
-                    var tasks = _tasks[generation];
-                    tasks.Add(result);
+                    var tasks = _requests[generation];
+                    tasks.Add(new Tuple<Request, TaskCompletionSource<object>>(request, completion));
                 }
-                return result;
+                return completion.Task;
             }
 
             public void End(int generation) {
-                List<Task> tasks = null;
+                List<Tuple<Request, TaskCompletionSource<object>>> requestTuples = null;
                 lock (_counters) {
                     int counter;
                     if(_counters.TryGetValue(generation, out counter)) {
@@ -66,8 +97,8 @@ namespace Sandbox.Queries {
                             throw new InvalidOperationException("counter is 0");
                         case 1:
                             _counters.Remove(generation);
-                            tasks = _tasks[generation];
-                            _tasks.Remove(generation);
+                            requestTuples = _requests[generation];
+                            _requests.Remove(generation);
                             break;
                         default:
                             _counters[generation] = counter;
@@ -77,9 +108,23 @@ namespace Sandbox.Queries {
                         throw new InvalidOperationException("counter not found");
                     }
                 }
-                if(tasks != null) {
-                    foreach(var task in tasks) {
-                        task.Start();
+
+                // TODO: group request-tuples together by key and field!
+                if(requestTuples != null) {
+                    foreach(var requestTuple in requestTuples) {
+                        var request = requestTuple.Item1;
+                        var completion = requestTuple.Item2;
+                        switch(request.Source) {
+                        case Source.PAGES:
+                            completion.SetResult(ToRow(_pages[request.Key]).Fields[request.Field]);
+                            break;
+                        case Source.USERS:
+                            completion.SetResult(ToRow(_users[request.Key]).Fields[request.Field]);
+                            break;
+                        default:
+                            completion.SetException(new ArgumentOutOfRangeException());
+                            break;
+                        }
                     }
                 }
             }
@@ -90,7 +135,7 @@ namespace Sandbox.Queries {
         private static readonly Dictionary<int, UserBE> _users;
 
         //--- Class Constructor ---
-        static ImmediateQuerySource() {
+        static FieldBasedQuerySource() {
             _pages = new Dictionary<int, PageBE> {
                 { 1, new PageBE(1, "Homepage", new DateTime(2010, 3, 31, 17, 23, 00), 42, new DateTime(2016, 2, 27, 11, 35, 00), new[] { 2, 3, 4 }) },
                 { 2, new PageBE(2, "Subpage 1", new DateTime(2010, 3, 31, 17, 23, 01), 13, new DateTime(2016, 2, 27, 11, 35, 01), new int[0]) },
@@ -103,15 +148,33 @@ namespace Sandbox.Queries {
             };
         }
 
+        //--- Class Methods ---
+        private static Row ToRow(PageBE page) {
+            return new Row(new Dictionary<string, object> {
+                { "title", page.Title },
+                { "created", page.Created },
+                { "modified", page.Modified },
+                { "authorid", page.AuthorId },
+                { "subpageids", page.Subpages }
+            });
+        }
+
+        private static Row ToRow(UserBE user) {
+            return new Row(new Dictionary<string, object> {
+                { "name", user.Name },
+                { "created", user.Created }
+            });
+        }
+
         //--- Fields ---
         private readonly int _generation;
         private readonly Scheduler _scheduler;
         private bool _disposed;
 
         //--- Constructors ---
-        public ImmediateQuerySource() : this(0, new Scheduler()) { }
+        public FieldBasedQuerySource() : this(0, new Scheduler()) { }
 
-        private ImmediateQuerySource(int generation, Scheduler scheduler) {
+        private FieldBasedQuerySource(int generation, Scheduler scheduler) {
             _scheduler = scheduler;
             _generation = generation;
             _scheduler.Begin(_generation);
@@ -122,7 +185,7 @@ namespace Sandbox.Queries {
             if(_disposed) {
                 throw new ObjectDisposedException("already disposed");
             }
-            return new ImmediateQuerySource(_generation + 1, _scheduler);
+            return new FieldBasedQuerySource(_generation + 1, _scheduler);
         }
 
         public void Dispose() {
@@ -134,87 +197,49 @@ namespace Sandbox.Queries {
         }
 
         public Task<string> GetPageTitle(int id) {
-            return Run(() => {
-                Log(new { id });
-                PageBE page;
-                if(!_pages.TryGetValue(id, out page)) {
-                    throw new ArgumentException($"page {id} not found");
-                }
-                return page.Title;
-            });
+            return Run(new Request(Source.PAGES, id, "title")).Then(value => (string)value);
         }
 
         public Task<DateTime> GetPageCreated(int id) {
-            return Run(() => {
-                Log(new { id });
-                PageBE page;
-                if(!_pages.TryGetValue(id, out page)) {
-                    throw new ArgumentException($"page {id} not found");
-                }
-                return page.Created;
-            });
+            return Run(new Request(Source.PAGES, id, "created")).Then(value => (DateTime)value);
         }
 
         public Task<DateTime> GetPageModified(int id) {
-            return Run(() => {
-                Log(new { id });
-                PageBE page;
-                if(!_pages.TryGetValue(id, out page)) {
-                    throw new ArgumentException($"page {id} not found");
-                }
-                return page.Modified;
-            });
+            return Run(new Request(Source.PAGES, id, "modified")).Then(value => (DateTime)value);
         }
 
         public Task<int> GetPageAuthorId(int id) {
-            return Run(() => {
-                Log(new { id });
-                PageBE page;
-                if(!_pages.TryGetValue(id, out page)) {
-                    throw new ArgumentException($"page {id} not found");
-                }
-                return page.AuthorId;
-            });
+            return Run(new Request(Source.PAGES, id, "authorid")).Then(value => (int)value);
         }
 
         public Task<IEnumerable<int>> GetPageSubpages(int id) {
-            return Run(() => {
-                Log(new { id });
-                PageBE page;
-                if(!_pages.TryGetValue(id, out page)) {
-                    throw new ArgumentException($"page {id} not found");
-                }
-                return (IEnumerable<int>)page.Subpages;
-            });
+            return Run(new Request(Source.PAGES, id, "subpageids")).Then(value => (IEnumerable<int>)value);
         }
 
         public Task<string> GetUserName(int id) {
-            return Run(() => {
-                Log(new { id });
-                UserBE user;
-                if(!_users.TryGetValue(id, out user)) {
-                    throw new ArgumentException($"user {id} not found");
-                }
-                return user.Name;
-            });
+            return Run(new Request(Source.USERS, id, "name")).Then(value => (string)value);
         }
 
         public Task<DateTime> GetUserCreated(int id) {
-            return Run(() => {
-                Log(new { id });
-                UserBE user;
-                if(!_users.TryGetValue(id, out user)) {
-                    throw new ArgumentException($"user {id} not found");
-                }
-                return user.Created;
-            });
+            return Run(new Request(Source.USERS, id, "created")).Then(value => (DateTime)value);
         }
 
-        private Task<T> Run<T>(Func<T> function, [CallerMemberName] string method = "<missing>") {
+        private Task<object> Run(Request request) {
             if(_disposed) {
                 throw new ObjectDisposedException("already disposed");
             }
-            return _scheduler.Add(_generation, function);
+#if true
+            return _scheduler.Add(_generation, request);
+#else
+            switch(request.Source) {
+            case Source.PAGES:
+                return Task.FromResult(ToRow(_pages[request.Key]).Fields[request.Field]);
+            case Source.USERS:
+                return Task.FromResult(ToRow(_users[request.Key]).Fields[request.Field]);
+            default:
+                throw new ArgumentOutOfRangeException();
+            }
+#endif
         }
 
         private void Log(object arguments, [CallerMemberName] string method = "<missing>") {

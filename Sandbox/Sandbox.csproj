@@ -54,6 +54,8 @@
   <ItemGroup>
     <Compile Include="Entities\PageBE.cs" />
     <Compile Include="Entities\UserBE.cs" />
+    <Compile Include="Queries\FieldBasedQuerySource.cs" />
+    <Compile Include="Queries\IQuerySource.cs" />
     <Compile Include="Queries\Queries.cs" />
     <Compile Include="Queries\ImmediateQuerySource.cs" />
     <Compile Include="Program.cs" />

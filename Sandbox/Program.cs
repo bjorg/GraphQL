@@ -54,7 +54,8 @@ namespace Sandbox {
                 }
             }
             */
-            var server = new SandboxQueryServer();
+//            var server = new SandboxQueryServer<ImmediateQuerySource>();
+            var server = new SandboxQueryServer<FieldBasedQuerySource>();
             var doc = server.Query(root => root.Page(1, page => TaskEx.ToRecord(
                 page.Title(),
                 page.Modified(),

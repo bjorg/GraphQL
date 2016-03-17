@@ -25,11 +25,11 @@ using System.Threading.Tasks;
 
 namespace Sandbox.Queries {
 
-    internal sealed class SandboxQueryServer {
+    internal sealed class SandboxQueryServer<TQuerySource> where TQuerySource : IQuerySource, new() {
 
         //--- Methods ---
         public Task<T> Query<T>(Func<IRootQuery, Task<T>> selection) {
-            var source = new ImmediateQuerySource();
+            var source = new TQuerySource();
             using(source) {
                 return selection(new RootQuery(source));
             }
