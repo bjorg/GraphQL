@@ -43,6 +43,62 @@ namespace Sandbox.Queries {
 
     internal sealed class ImmediateQuerySource : IQuerySource {
 
+        //--- Types ---
+        private sealed class Scheduler {
+
+            //--- Fields ---
+            private readonly Dictionary<int, int> _counters = new Dictionary<int, int>();
+            private readonly Dictionary<int, List<Task>> _tasks = new Dictionary<int, List<Task>>();
+
+            //--- Methods ---
+            public void Begin(int generation) {
+                lock (_counters) {
+                    int counter;
+                    if(!_counters.TryGetValue(generation, out counter)) {
+                        _tasks[generation] = new List<Task>();
+                    }
+                    _counters[generation] = ++counter;
+                }
+            }
+
+            public Task<T> Add<T>(int generation, Func<T> function) {
+                var result = new Task<T>(function);
+                lock (_counters) {
+                    var tasks = _tasks[generation];
+                    tasks.Add(result);
+                }
+                return result;
+            }
+
+            public void End(int generation) {
+                List<Task> tasks = null;
+                lock (_counters) {
+                    int counter;
+                    if(_counters.TryGetValue(generation, out counter)) {
+                        switch(counter--) {
+                        case 0:
+                            throw new InvalidOperationException("counter is 0");
+                        case 1:
+                            _counters.Remove(generation);
+                            tasks = _tasks[generation];
+                            _tasks.Remove(generation);
+                            break;
+                        default:
+                            _counters[generation] = counter;
+                            break;
+                        }
+                    } else {
+                        throw new InvalidOperationException("counter not found");
+                    }
+                }
+                if(tasks != null) {
+                    foreach(var task in tasks) {
+                        task.Start();
+                    }
+                }
+            }
+        }
+
         //--- Class Fields ---
         private static readonly Dictionary<int, PageBE> _pages;
         private static readonly Dictionary<int, UserBE> _users;
@@ -63,11 +119,13 @@ namespace Sandbox.Queries {
 
         //--- Fields ---
         private readonly int _generation;
-        private readonly QueryScheduler _scheduler;
+        private readonly Scheduler _scheduler;
         private bool _disposed;
 
         //--- Constructors ---
-        public ImmediateQuerySource(int generation, QueryScheduler scheduler) {
+        public ImmediateQuerySource() : this(0, new Scheduler()) { }
+
+        private ImmediateQuerySource(int generation, Scheduler scheduler) {
             _scheduler = scheduler;
             _generation = generation;
             _scheduler.Begin(_generation);
@@ -75,10 +133,16 @@ namespace Sandbox.Queries {
 
         //--- Methods ---
         public IQuerySource New() {
+            if(_disposed) {
+                throw new ObjectDisposedException("already disposed");
+            }
             return new ImmediateQuerySource(_generation + 1, _scheduler);
         }
 
         public void Dispose() {
+            if(_disposed) {
+                throw new ObjectDisposedException("already disposed");
+            }
             _disposed = true;
             _scheduler.End(_generation);
         }

@@ -20,7 +20,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -28,74 +27,11 @@ namespace Sandbox.Queries {
 
     internal sealed class SandboxQueryServer {
 
-        //--- Fields ---
-        private readonly IQuerySource _source;
-
-        //--- Constructors ---
-        public SandboxQueryServer() {
-            var scheduler = new QueryScheduler();
-            _source = new ImmediateQuerySource(0, scheduler);
-        }
-
         //--- Methods ---
-        public Task<T> Root<T>(Func<IRootQuery, Task<T>> selection) {
-            using(_source) {
-                return selection(new RootQuery(_source));
-            }
-        }
-    }
-
-    internal sealed class QueryScheduler {
-
-        //--- Fields ---
-        private readonly Dictionary<int, int> _counters = new Dictionary<int, int>();
-        private readonly Dictionary<int, List<Task>> _tasks = new Dictionary<int, List<Task>>();
-
-        //--- Methods ---
-        public void Begin(int generation) {
-            lock(_counters) {
-                int counter;
-                if(!_counters.TryGetValue(generation, out counter)) {
-                    _tasks[generation] = new List<Task>();
-                }
-                _counters[generation] = ++counter;
-            }
-        }
-
-        public Task<T> Add<T>(int generation, Func<T> function) {
-            var result = new Task<T>(function);
-            lock(_counters) {
-                var tasks = _tasks[generation];
-                tasks.Add(result);
-            }
-            return result;
-        }
-
-        public void End(int generation) {
-            List<Task> tasks = null;
-            lock(_counters) {
-                int counter;
-                if(_counters.TryGetValue(generation, out counter)) {
-                    switch(counter--) {
-                    case 0:
-                        throw new InvalidOperationException("counter is 0");
-                    case 1:
-                        _counters.Remove(generation);
-                        tasks = _tasks[generation];
-                        _tasks.Remove(generation);
-                        break;
-                    default:
-                        _counters[generation] = counter;
-                        break;
-                    }
-                } else {
-                    throw new InvalidOperationException("counter not found");
-                }
-            }
-            if(tasks != null) {
-                foreach(var task in tasks) {
-                    task.Start();
-                }
+        public Task<T> Query<T>(Func<IRootQuery, Task<T>> selection) {
+            var source = new ImmediateQuerySource();
+            using(source) {
+                return selection(new RootQuery(source));
             }
         }
     }

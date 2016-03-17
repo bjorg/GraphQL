@@ -55,7 +55,7 @@ namespace Sandbox {
             }
             */
             var server = new SandboxQueryServer();
-            var doc = server.Root(root => root.Page(1, page => TaskEx.ToRecord(
+            var doc = server.Query(root => root.Page(1, page => TaskEx.ToRecord(
                 page.Title(),
                 page.Modified(),
                 page.Author(user => TaskEx.ToRecord(
