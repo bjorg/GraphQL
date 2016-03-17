@@ -19,7 +19,6 @@
  * limitations under the License.
  */
 
-using Newtonsoft.Json;
 using Sandbox.Entities;
 using System;
 using System.Collections.Generic;
@@ -228,16 +227,12 @@ namespace Sandbox.Queries {
             if(_disposed) {
                 throw new ObjectDisposedException("already disposed");
             }
-#if true
             return _scheduler.Add(_generation, function);
-#else
-            return Task.Run(function);
-#endif
         }
 
         private void Log(object arguments, [CallerMemberName] string method = "<missing>") {
-            var args = (arguments != null) ? JsonConvert.SerializeObject(arguments) : "";
-            Console.WriteLine($"[{_generation}] {method}({args})");
+            //var args = (arguments != null) ? JsonConvert.SerializeObject(arguments) : "";
+            //Console.WriteLine($"[{_generation}] {method}({args})");
         }
     }
 }
