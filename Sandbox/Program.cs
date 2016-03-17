@@ -55,57 +55,26 @@ namespace Sandbox {
             }
             */
             var runner = new QueryRunner();
-            var doc = runner.Query(root => root.Page(
-                1,
-                page => TaskEx.ToTuple(
-                    page.Title(),
-                    page.Modified(),
-                    page.Author(
-                        user => TaskEx.ToTuple(
-                            user.Id(),
-                            user.Name()
-                        ).Then(
-                            tuple => new {
-                                Id = tuple.Item1,
-                                Name = tuple.Item2
-                            }
-                        )
-                    ),
-                    page.Subpages(
-                        subpage => TaskEx.ToTuple(
-                            subpage.Title(),
-                            subpage.Author(
-                                user => TaskEx.ToTuple(
-                                    user.Id(),
-                                    user.Name()
-                                ).Then(
-                                    tuple => new {
-                                        Id = tuple.Item1,
-                                        Name = tuple.Item2
-                                    }
-                                )
-                            )
-                        ).Then(
-                            tuple => new {
-                                Title = tuple.Item1,
-                                Author = tuple.Item2
-                            }
-                        )
-                    )
-                ).Then(
-                    tuple => new {
-                        Title = tuple.Item1,
-                        Modified = tuple.Item2,
-                        Author = tuple.Item3,
-                        Subpages = tuple.Item4
-                    }
-                )
-            ).Then(
-                data => new {
-                    Data = data
-                }
-            ));
-            Console.WriteLine(JsonConvert.SerializeObject(doc.Result, Formatting.Indented));
+            var doc = runner.Query(root => root.Page(1, page => TaskEx.ToRecord(
+                page.Title(),
+                page.Modified(),
+                page.Author(user => TaskEx.ToRecord(
+                    user.Id(),
+                    user.Name(),
+                    (Id, Name) => new { Id, Name }
+                )),
+                page.Subpages(subpage => TaskEx.ToRecord(
+                    subpage.Title(),
+                    subpage.Author(user => TaskEx.ToRecord(
+                        user.Id(),
+                        user.Name(),
+                        (Id, Name) => new { Id, Name }
+                    )),
+                    (Title, Author) => new { Title, Author }
+                )),
+                (Title, Modified, Author, Subpages) => new { Title, Modified, Author, Subpages }
+            )).Then(Data => new { Data })).Result;
+            Console.WriteLine(JsonConvert.SerializeObject(doc, Formatting.Indented));
         }
     }
 }

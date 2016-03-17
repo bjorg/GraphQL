@@ -27,16 +27,28 @@ namespace Sandbox {
     public static class TaskEx {
 
         //--- Methods ---
-        public static Task<Tuple<T1, T2>> ToTuple<T1, T2>(Task<T1> first, Task<T2> second) {
-            return Task.WhenAll(first, second).ContinueWith(_ => new Tuple<T1, T2>(first.Result, second.Result));
+        public static Task<Tuple<T1, T2>> ToTuple<T1, T2>(Task<T1> task1, Task<T2> task2) {
+            return Task.WhenAll(task1, task2).ContinueWith(_ => new Tuple<T1, T2>(task1.Result, task2.Result));
         }
 
-        public static Task<Tuple<T1, T2, T3>> ToTuple<T1, T2, T3>(Task<T1> first, Task<T2> second, Task<T3> third) {
-            return Task.WhenAll(first, second, third).ContinueWith(_ => new Tuple<T1, T2, T3>(first.Result, second.Result, third.Result));
+        public static Task<Tuple<T1, T2, T3>> ToTuple<T1, T2, T3>(Task<T1> task1, Task<T2> task2, Task<T3> task3) {
+            return Task.WhenAll(task1, task2, task3).ContinueWith(_ => new Tuple<T1, T2, T3>(task1.Result, task2.Result, task3.Result));
         }
 
-        public static Task<Tuple<T1, T2, T3, T4>> ToTuple<T1, T2, T3, T4>(Task<T1> first, Task<T2> second, Task<T3> third, Task<T4> fourth) {
-            return Task.WhenAll(first, second, third, fourth).ContinueWith(_ => new Tuple<T1, T2, T3, T4>(first.Result, second.Result, third.Result, fourth.Result));
+        public static Task<Tuple<T1, T2, T3, T4>> ToTuple<T1, T2, T3, T4>(Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4) {
+            return Task.WhenAll(task1, task2, task3, task4).ContinueWith(_ => new Tuple<T1, T2, T3, T4>(task1.Result, task2.Result, task3.Result, task4.Result));
+        }
+
+        public static Task<TResult> ToRecord<T1, T2, TResult>(Task<T1> task1, Task<T2> task2, Func<T1, T2, TResult> combine) {
+            return Task.WhenAll(task1, task2).ContinueWith(_ => combine(task1.Result, task2.Result));
+        }
+
+        public static Task<TResult> ToRecord<T1, T2, T3, TResult>(Task<T1> task1, Task<T2> task2, Task<T3> task3, Func<T1, T2, T3, TResult> combine) {
+            return Task.WhenAll(task1, task2, task3).ContinueWith(_ => combine(task1.Result, task2.Result, task3.Result));
+        }
+
+        public static Task<TResult> ToRecord<T1, T2, T3, T4, TResult>(Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4, Func<T1, T2, T3, T4, TResult> combine) {
+            return Task.WhenAll(task1, task2, task3, task4).ContinueWith(_ => combine(task1.Result, task2.Result, task3.Result, task4.Result));
         }
 
         public static Task<TResult> Then<TSource, TResult>(this Task<TSource> task, Func<TSource, TResult> convert, IDisposable disposable = null) {
