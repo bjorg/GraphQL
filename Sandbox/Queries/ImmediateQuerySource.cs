@@ -55,7 +55,7 @@ namespace Sandbox.Queries {
                     _tasks[generation] = new List<Task>();
                 }
                 _counters[generation] = ++counter;
-                Console.WriteLine($"new generation {generation}(count: {counter})");
+//                Console.WriteLine($"new generation {generation}(count: {counter})");
             }
         }
 
@@ -86,7 +86,7 @@ namespace Sandbox.Queries {
                         _counters[generation] = --counter;
                         break;
                     }
-                    Console.WriteLine($"end generation {generation}(count: {counter})");
+//                    Console.WriteLine($"end generation {generation}(count: {counter})");
                 } else {
                     throw new InvalidOperationException("counter not found");
                 }
@@ -122,6 +122,7 @@ namespace Sandbox.Queries {
         //--- Fields ---
         private readonly int _generation;
         private readonly QueryScheduler _scheduler;
+        private bool _disposed;
 
         //--- Constructors ---
         public ImmediateQuerySource(int generation, QueryScheduler scheduler) {
@@ -136,13 +137,13 @@ namespace Sandbox.Queries {
         }
 
         public void Dispose() {
+            _disposed = true;
             _scheduler.End(_generation);
         }
 
         public Task<string> GetPageTitle(int id) {
-            Log("adding", new { id });
             return Run(() => {
-                Log("running" ,new { id });
+                Log(new { id });
                 PageBE page;
                 if(!_pages.TryGetValue(id, out page)) {
                     throw new ArgumentException($"page {id} not found");
@@ -152,9 +153,8 @@ namespace Sandbox.Queries {
         }
 
         public Task<DateTime> GetPageCreated(int id) {
-            Log("adding", new { id });
             return Run(() => {
-                Log("running", new { id });
+                Log(new { id });
                 PageBE page;
                 if(!_pages.TryGetValue(id, out page)) {
                     throw new ArgumentException($"page {id} not found");
@@ -164,9 +164,8 @@ namespace Sandbox.Queries {
         }
 
         public Task<DateTime> GetPageModified(int id) {
-            Log("adding", new { id });
             return Run(() => {
-                Log("running", new { id });
+                Log(new { id });
                 PageBE page;
                 if(!_pages.TryGetValue(id, out page)) {
                     throw new ArgumentException($"page {id} not found");
@@ -176,9 +175,8 @@ namespace Sandbox.Queries {
         }
 
         public Task<int> GetPageAuthorId(int id) {
-            Log("adding", new { id });
             return Run(() => {
-                Log("running", new { id });
+                Log(new { id });
                 PageBE page;
                 if(!_pages.TryGetValue(id, out page)) {
                     throw new ArgumentException($"page {id} not found");
@@ -188,9 +186,8 @@ namespace Sandbox.Queries {
         }
 
         public Task<IEnumerable<int>> GetPageSubpages(int id) {
-            Log("adding", new { id });
             return Run(() => {
-                Log("running", new { id });
+                Log(new { id });
                 PageBE page;
                 if(!_pages.TryGetValue(id, out page)) {
                     throw new ArgumentException($"page {id} not found");
@@ -200,9 +197,8 @@ namespace Sandbox.Queries {
         }
 
         public Task<string> GetUserName(int id) {
-            Log("adding", new { id });
             return Run(() => {
-                Log("running", new { id });
+                Log(new { id });
                 UserBE user;
                 if(!_users.TryGetValue(id, out user)) {
                     throw new ArgumentException($"user {id} not found");
@@ -212,9 +208,8 @@ namespace Sandbox.Queries {
         }
 
         public Task<DateTime> GetUserCreated(int id) {
-            Log("adding", new { id });
             return Run(() => {
-                Log("running", new { id });
+                Log(new { id });
                 UserBE user;
                 if(!_users.TryGetValue(id, out user)) {
                     throw new ArgumentException($"user {id} not found");
@@ -224,16 +219,19 @@ namespace Sandbox.Queries {
         }
 
         private Task<T> Run<T>(Func<T> function, [CallerMemberName] string method = "<missing>") {
-#if false
+            if(_disposed) {
+                throw new ObjectDisposedException("already disposed");
+            }
+#if true
             return _scheduler.Add(_generation, function);
 #else
             return Task.Run(function);
 #endif
         }
 
-        private void Log(string action, object arguments, [CallerMemberName] string method = "<missing>") {
+        private void Log(object arguments, [CallerMemberName] string method = "<missing>") {
             var args = (arguments != null) ? JsonConvert.SerializeObject(arguments) : "";
-            Console.WriteLine($"[{_generation}] {action} {method}({args})");
+            Console.WriteLine($"[{_generation}] {method}({args})");
         }
     }
 }

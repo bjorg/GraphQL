@@ -27,32 +27,36 @@ namespace Sandbox {
     public static class TaskEx {
 
         //--- Methods ---
-        public static Task<Tuple<T1, T2>> WhenAllToTuple<T1, T2>(Task<T1> first, Task<T2> second) {
+        public static Task<Tuple<T1, T2>> ToTuple<T1, T2>(Task<T1> first, Task<T2> second) {
             return Task.WhenAll(first, second).ContinueWith(_ => new Tuple<T1, T2>(first.Result, second.Result));
         }
 
-        public static Task<Tuple<T1, T2, T3>> WhenAllToTuple<T1, T2, T3>(Task<T1> first, Task<T2> second, Task<T3> third) {
+        public static Task<Tuple<T1, T2, T3>> ToTuple<T1, T2, T3>(Task<T1> first, Task<T2> second, Task<T3> third) {
             return Task.WhenAll(first, second, third).ContinueWith(_ => new Tuple<T1, T2, T3>(first.Result, second.Result, third.Result));
         }
 
-        public static Task<Tuple<T1, T2, T3, T4>> WhenAllToTuple<T1, T2, T3, T4>(Task<T1> first, Task<T2> second, Task<T3> third, Task<T4> fourth) {
+        public static Task<Tuple<T1, T2, T3, T4>> ToTuple<T1, T2, T3, T4>(Task<T1> first, Task<T2> second, Task<T3> third, Task<T4> fourth) {
             return Task.WhenAll(first, second, third, fourth).ContinueWith(_ => new Tuple<T1, T2, T3, T4>(first.Result, second.Result, third.Result, fourth.Result));
         }
 
         public static Task<TResult> Then<TSource, TResult>(this Task<TSource> task, Func<TSource, TResult> convert, IDisposable disposable = null) {
-            try {
-                return task.ContinueWith(t => convert(t.Result));
-            } finally {
-                disposable?.Dispose();
-            }
+            return task.ContinueWith(t => {
+                try {
+                    return convert(t.Result);
+                } finally {
+                    disposable?.Dispose();
+                }
+            });
         }
 
         public static Task<TResult> Then<TSource, TResult>(this Task<TSource> task, Func<TSource, Task<TResult>> convert, IDisposable disposable = null) {
-            try {
-                return task.ContinueWith(t => convert(t.Result)).Unwrap();
-            } finally {
-                disposable?.Dispose();
-            }
+            return task.ContinueWith(t => {
+                try {
+                    return convert(t.Result);
+                } finally {
+                    disposable?.Dispose();
+                }
+            }).Unwrap();
         }
     }
 }

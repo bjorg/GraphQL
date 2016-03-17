@@ -41,11 +41,13 @@ namespace Sandbox {
                     title
                     lastModified
                     author {
+                        id
                         name
                     }
                     subpages {
                         title
                         author {
+                            id
                             name
                         }
                     }
@@ -53,22 +55,27 @@ namespace Sandbox {
             }
             */
             var runner = new QueryRunner();
-            var doc = runner.Query(root => root.Page(1,
-                page => TaskEx.WhenAllToTuple(
+            var doc = runner.Query(root => root.Page(
+                1,
+                page => TaskEx.ToTuple(
                     page.Title(),
                     page.Modified(),
                     page.Author(
-                        user => user.Name().Then(
-                            name => new {
-                                Name = name
+                        user => TaskEx.ToTuple(
+                            user.Id(),
+                            user.Name()
+                        ).Then(
+                            tuple => new {
+                                Id = tuple.Item1,
+                                Name = tuple.Item2
                             }
                         )
                     ),
                     page.Subpages(
-                        subpage => TaskEx.WhenAllToTuple(
+                        subpage => TaskEx.ToTuple(
                             subpage.Title(),
                             subpage.Author(
-                                user => TaskEx.WhenAllToTuple(
+                                user => TaskEx.ToTuple(
                                     user.Id(),
                                     user.Name()
                                 ).Then(
