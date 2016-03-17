@@ -54,8 +54,8 @@ namespace Sandbox {
                 }
             }
             */
-            var runner = new QueryRunner();
-            var doc = runner.Query(root => root.Page(1, page => TaskEx.ToRecord(
+            var server = new SandboxQueryServer();
+            var doc = server.Root(root => root.Page(1, page => TaskEx.ToRecord(
                 page.Title(),
                 page.Modified(),
                 page.Author(user => TaskEx.ToRecord(

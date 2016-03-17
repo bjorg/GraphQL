@@ -41,64 +41,6 @@ namespace Sandbox.Queries {
         Task<DateTime> GetUserCreated(int id);
     }
 
-    internal sealed class QueryScheduler {
-
-        //--- Fields ---
-        private readonly Dictionary<int, int> _counters = new Dictionary<int, int>();
-        private readonly Dictionary<int, List<Task>> _tasks = new Dictionary<int, List<Task>>();
-
-        //--- Methods ---
-        public void Begin(int generation) {
-            lock (_counters) {
-                int counter;
-                if(!_counters.TryGetValue(generation, out counter)) {
-                    _tasks[generation] = new List<Task>();
-                }
-                _counters[generation] = ++counter;
-//                Console.WriteLine($"new generation {generation}(count: {counter})");
-            }
-        }
-
-        public Task<T> Add<T>(int generation, Func<T> function) {
-            var result = new Task<T>(function);
-            lock(_counters) {
-                var tasks = _tasks[generation];
-                tasks.Add(result);
-            }
-            return result;
-        }
-
-        public void End(int generation) {
-            List<Task> tasks = null;
-            lock(_counters) {
-                int counter;
-                if(_counters.TryGetValue(generation, out counter)) {
-                    switch(counter) {
-                    case 0:
-                        throw new InvalidOperationException("counter is 0");
-                    case 1:
-                        _counters.Remove(generation);
-                        tasks = _tasks[generation];
-                        _tasks.Remove(generation);
-                        --counter;
-                        break;
-                    default:
-                        _counters[generation] = --counter;
-                        break;
-                    }
-//                    Console.WriteLine($"end generation {generation}(count: {counter})");
-                } else {
-                    throw new InvalidOperationException("counter not found");
-                }
-            }
-            if(tasks != null) {
-                foreach(var task in tasks) {
-                    task.Start();
-                }
-            }
-        }
-    }
-
     internal sealed class ImmediateQuerySource : IQuerySource {
 
         //--- Class Fields ---
