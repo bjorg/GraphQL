@@ -56,24 +56,23 @@ namespace Sandbox {
             */
 //            var server = new SandboxQueryServer<ImmediateQuerySource>();
             var server = new SandboxQueryServer<FieldBasedQuerySource>();
-            var doc = server.Query(root => root.Page(1, page => TaskEx.ToRecord(
+            var doc = server.Query(root => root.Page(1, page => TaskEx.Record(
+                (Title, Modified, Author, Subpages) => new { Title, Modified, Author, Subpages },
                 page.Title(),
                 page.Modified(),
-                page.Author(user => TaskEx.ToRecord(
+                page.Author(user => TaskEx.Record(
+                    (Id, Name) => new { Id, Name },
                     user.Id(),
-                    user.Name(),
-                    (Id, Name) => new { Id, Name }
-                )),
-                page.Subpages(subpage => TaskEx.ToRecord(
+                    user.Name()
+                )), page.Subpages(subpage => TaskEx.Record(
+                    (Title, Author) => new { Title, Author },
                     subpage.Title(),
-                    subpage.Author(user => TaskEx.ToRecord(
+                    subpage.Author(user => TaskEx.Record(
+                        (Id, Name) => new { Id, Name },
                         user.Id(),
-                        user.Name(),
-                        (Id, Name) => new { Id, Name }
-                    )),
-                    (Title, Author) => new { Title, Author }
-                )),
-                (Title, Modified, Author, Subpages) => new { Title, Modified, Author, Subpages }
+                        user.Name()
+                    ))
+                ))
             )).Then(Data => new { Data })).Result;
             Console.WriteLine(JsonConvert.SerializeObject(doc, Formatting.Indented));
         }

@@ -27,15 +27,15 @@ namespace Sandbox {
     public static class TaskEx {
 
         //--- Methods ---
-        public static Task<TResult> ToRecord<T1, T2, TResult>(Task<T1> task1, Task<T2> task2, Func<T1, T2, TResult> combine) {
+        public static Task<TResult> Record<T1, T2, TResult>(Func<T1, T2, TResult> combine, Task<T1> task1, Task<T2> task2) {
             return Task.WhenAll(task1, task2).ContinueWith(_ => combine(task1.Result, task2.Result));
         }
 
-        public static Task<TResult> ToRecord<T1, T2, T3, TResult>(Task<T1> task1, Task<T2> task2, Task<T3> task3, Func<T1, T2, T3, TResult> combine) {
+        public static Task<TResult> Record<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> combine, Task<T1> task1, Task<T2> task2, Task<T3> task3) {
             return Task.WhenAll(task1, task2, task3).ContinueWith(_ => combine(task1.Result, task2.Result, task3.Result));
         }
 
-        public static Task<TResult> ToRecord<T1, T2, T3, T4, TResult>(Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4, Func<T1, T2, T3, T4, TResult> combine) {
+        public static Task<TResult> Record<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> combine, Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4) {
             return Task.WhenAll(task1, task2, task3, task4).ContinueWith(_ => combine(task1.Result, task2.Result, task3.Result, task4.Result));
         }
 

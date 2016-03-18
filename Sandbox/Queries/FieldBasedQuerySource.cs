@@ -22,6 +22,7 @@
 using Sandbox.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -109,23 +110,107 @@ namespace Sandbox.Queries {
                     }
                 }
 
-                // TODO: group request-tuples together by key and field!
+                //1) Aggregate Field names for same Source and Key
+                //    [(Source,[Key],[Field1])]
+                //    +
+                //    [(Source,[Key],[Field2])]
+                //    =>
+                //    [(Source,[Key],[Field1, Field2])]
+
+                //2) Aggregate Key values for same Source and Field
+                //    [(Source,[Key1],[Field])]
+                //    +
+                //    [(Source,[Key2],[Field])]
+                //    =>
+                //    [(Source,[Key1, Key2],[Field])]
+
                 if(requestTuples != null) {
-                    foreach(var requestTuple in requestTuples) {
-                        var request = requestTuple.Item1;
-                        var completion = requestTuple.Item2;
-                        switch(request.Source) {
+                    Console.WriteLine($"/* Batch {generation} */");
+                    foreach(var bySource in requestTuples.ToLookup(r => r.Item1.Source)) {
+
+                        // colummnSet -> key -> field -> List<TaskCompletionSource<object>>
+
+                        var batchByColumns = new Dictionary<string, Dictionary<int, Dictionary<string, List<TaskCompletionSource<object>>>>>();
+                        foreach(var byKey in bySource.ToLookup(r => r.Item1.Key)) {
+
+                            // group by column-set
+                            var columns = string.Join("-", byKey.Select(r => r.Item1.Field).Distinct().OrderBy(k => k).ToArray());
+                            Dictionary<int, Dictionary<string, List<TaskCompletionSource<object>>>> batchByColumnsAndKey;
+                            if(!batchByColumns.TryGetValue(columns, out batchByColumnsAndKey)) {
+                                batchByColumnsAndKey = new Dictionary<int, Dictionary<string, List<TaskCompletionSource<object>>>>();
+                                batchByColumns.Add(columns, batchByColumnsAndKey);
+                            }
+
+                            // capture keys that what the captured column-set
+                            Dictionary<string, List<TaskCompletionSource<object>>> batchByColumnsAndKeyAndField;
+                            if(!batchByColumnsAndKey.TryGetValue(byKey.Key, out batchByColumnsAndKeyAndField)) {
+                                batchByColumnsAndKeyAndField = new Dictionary<string, List<TaskCompletionSource<object>>>();
+                                batchByColumnsAndKey.Add(byKey.Key, batchByColumnsAndKeyAndField);
+                            }
+
+                            // store completions for requested fields in column-set
+                            foreach(var requestTuple in byKey) {
+                                List<TaskCompletionSource<object>> tasks;
+                                if(!batchByColumnsAndKeyAndField.TryGetValue(requestTuple.Item1.Field, out tasks)) {
+                                    tasks = new List<TaskCompletionSource<object>>();
+                                    batchByColumnsAndKeyAndField[requestTuple.Item1.Field] = tasks;
+                                }
+                                tasks.Add(requestTuple.Item2);
+                            }
+                        }
+                        string table;
+                        switch(bySource.Key) {
                         case Source.PAGES:
-                            completion.SetResult(ToRow(_pages[request.Key]).Fields[request.Field]);
+                            table = "pages";
                             break;
                         case Source.USERS:
-                            completion.SetResult(ToRow(_users[request.Key]).Fields[request.Field]);
+                            table = "users";
                             break;
                         default:
-                            completion.SetException(new ArgumentOutOfRangeException());
-                            break;
+                            throw new ArgumentOutOfRangeException();
+                        }
+                        foreach(var b1 in batchByColumns) {
+                            var keys = b1.Value.Keys.OrderBy(key => key).ToArray();
+                            var columns = b1.Value.First().Value.Keys.OrderBy(column => column).ToArray();
+                            Console.WriteLine($"SELECT id, {string.Join(", ", columns)} FROM {table} WHERE id IN ({string.Join(", ", keys.Select(key => key.ToString()))});");
+                            foreach(var key in keys) {
+                                Row row;
+                                switch(bySource.Key) {
+                                case Source.PAGES:
+                                    row = ToRow(_pages[key]);
+                                    break;
+                                case Source.USERS:
+                                    row = ToRow(_users[key]);
+                                    break;
+                                default:
+                                    throw new ArgumentOutOfRangeException();
+                                }
+                                foreach(var column in columns) {
+                                    var value = row.Fields[column];
+                                    foreach(var completion in b1.Value[key][column]) {
+                                        completion.SetResult(value);
+                                    }
+                                }
+                            }
                         }
                     }
+
+                    // execute queries the old-fashioned way
+                    //foreach(var requestTuple in requestTuples) {
+                    //    var request = requestTuple.Item1;
+                    //    var completion = requestTuple.Item2;
+                    //    switch(request.Source) {
+                    //    case Source.PAGES:
+                    //        completion.SetResult(ToRow(_pages[request.Key]).Fields[request.Field]);
+                    //        break;
+                    //    case Source.USERS:
+                    //        completion.SetResult(ToRow(_users[request.Key]).Fields[request.Field]);
+                    //        break;
+                    //    default:
+                    //        completion.SetException(new ArgumentOutOfRangeException());
+                    //        break;
+                    //    }
+                    //}
                 }
             }
         }
