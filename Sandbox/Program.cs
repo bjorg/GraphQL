@@ -74,6 +74,7 @@ namespace Sandbox {
                     ))
                 ))
             )).Then(Data => new { Data })).Result;
+            Console.WriteLine();
             Console.WriteLine(JsonConvert.SerializeObject(doc, Formatting.Indented));
         }
     }

@@ -23,7 +23,6 @@ using Sandbox.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Sandbox.Queries {
@@ -33,6 +32,7 @@ namespace Sandbox.Queries {
         //--- Types ---
         private enum Source {
             PAGES,
+            SUBPAGES,
             USERS
         }
 
@@ -163,6 +163,9 @@ namespace Sandbox.Queries {
                         case Source.PAGES:
                             table = "pages";
                             break;
+                        case Source.SUBPAGES:
+                            table = "subpages";
+                            break;
                         case Source.USERS:
                             table = "users";
                             break;
@@ -178,6 +181,9 @@ namespace Sandbox.Queries {
                                 switch(bySource.Key) {
                                 case Source.PAGES:
                                     row = ToRow(_pages[key]);
+                                    break;
+                                case Source.SUBPAGES:
+                                    row = ToRow(key, _subpages[key]);
                                     break;
                                 case Source.USERS:
                                     row = ToRow(_users[key]);
@@ -217,6 +223,7 @@ namespace Sandbox.Queries {
 
         //--- Class Fields ---
         private static readonly Dictionary<int, PageBE> _pages;
+        private static readonly Dictionary<int, IEnumerable<int>> _subpages;
         private static readonly Dictionary<int, UserBE> _users;
 
         //--- Class Constructor ---
@@ -227,6 +234,10 @@ namespace Sandbox.Queries {
                 { 3, new PageBE(3, "Subpage 2", new DateTime(2010, 3, 31, 17, 23, 02), 42, new DateTime(2016, 2, 27, 11, 35, 02), new int[0]) },
                 { 4, new PageBE(4, "Subpage 3", new DateTime(2010, 3, 31, 17, 23, 03), 13, new DateTime(2016, 2, 27, 11, 35, 03), new int[0]) }
             };
+            _subpages = new Dictionary<int, IEnumerable<int>>();
+            foreach(var page in _pages.Values) {
+                _subpages[page.Id] = page.Subpages;
+            }
             _users = new Dictionary<int, UserBE> {
                 { 13, new UserBE(13, "Jane Doe", new DateTime(1976, 04, 30, 11, 00, 00)) },
                 { 42, new UserBE(42, "John Doe", new DateTime(1972, 09, 23, 16, 00, 00)) }
@@ -236,18 +247,27 @@ namespace Sandbox.Queries {
         //--- Class Methods ---
         private static Row ToRow(PageBE page) {
             return new Row(new Dictionary<string, object> {
+                { "id", page.Id },
                 { "title", page.Title },
                 { "created", page.Created },
                 { "modified", page.Modified },
-                { "authorid", page.AuthorId },
+                { "authorId", page.AuthorId },
                 { "subpageids", page.Subpages }
             });
         }
 
         private static Row ToRow(UserBE user) {
             return new Row(new Dictionary<string, object> {
+                { "id", user.Id },
                 { "name", user.Name },
                 { "created", user.Created }
+            });
+        }
+
+        private static Row ToRow(int key, IEnumerable<int> values) {
+            return new Row(new Dictionary<string, object> {
+                { "id", key },
+                { "subpageId", values }
             });
         }
 
@@ -294,11 +314,11 @@ namespace Sandbox.Queries {
         }
 
         public Task<int> GetPageAuthorId(int id) {
-            return Run(new Request(Source.PAGES, id, "authorid")).Then(value => (int)value);
+            return Run(new Request(Source.PAGES, id, "authorId")).Then(value => (int)value);
         }
 
         public Task<IEnumerable<int>> GetPageSubpages(int id) {
-            return Run(new Request(Source.PAGES, id, "subpageids")).Then(value => (IEnumerable<int>)value);
+            return Run(new Request(Source.SUBPAGES, id, "subpageId")).Then(value => (IEnumerable<int>)value);
         }
 
         public Task<string> GetUserName(int id) {
@@ -325,11 +345,6 @@ namespace Sandbox.Queries {
                 throw new ArgumentOutOfRangeException();
             }
 #endif
-        }
-
-        private void Log(object arguments, [CallerMemberName] string method = "<missing>") {
-            //var args = (arguments != null) ? JsonConvert.SerializeObject(arguments) : "";
-            //Console.WriteLine($"[{_generation}] {method}({args})");
         }
     }
 }
