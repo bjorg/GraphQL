@@ -27,7 +27,7 @@ using System.Threading.Tasks;
 
 namespace Sandbox.Queries {
 
-    internal sealed class ImmediateQuerySource : IQuerySource {
+    internal sealed class RowBasedQuerySource : IQuerySource {
 
         //--- Types ---
         private sealed class Scheduler {
@@ -90,7 +90,7 @@ namespace Sandbox.Queries {
         private static readonly Dictionary<int, UserBE> _users;
 
         //--- Class Constructor ---
-        static ImmediateQuerySource() {
+        static RowBasedQuerySource() {
             _pages = new Dictionary<int, PageBE> {
                 { 1, new PageBE(1, "Homepage", new DateTime(2010, 3, 31, 17, 23, 00), 42, new DateTime(2016, 2, 27, 11, 35, 00), new[] { 2, 3, 4 }) },
                 { 2, new PageBE(2, "Subpage 1", new DateTime(2010, 3, 31, 17, 23, 01), 13, new DateTime(2016, 2, 27, 11, 35, 01), new int[0]) },
@@ -109,9 +109,9 @@ namespace Sandbox.Queries {
         private bool _disposed;
 
         //--- Constructors ---
-        public ImmediateQuerySource() : this(0, new Scheduler()) { }
+        public RowBasedQuerySource() : this(0, new Scheduler()) { }
 
-        private ImmediateQuerySource(int generation, Scheduler scheduler) {
+        private RowBasedQuerySource(int generation, Scheduler scheduler) {
             _scheduler = scheduler;
             _generation = generation;
             _scheduler.Begin(_generation);
@@ -122,7 +122,7 @@ namespace Sandbox.Queries {
             if(_disposed) {
                 throw new ObjectDisposedException("already disposed");
             }
-            return new ImmediateQuerySource(_generation + 1, _scheduler);
+            return new RowBasedQuerySource(_generation + 1, _scheduler);
         }
 
         public void Dispose() {

@@ -57,7 +57,7 @@
     <Compile Include="Queries\FieldBasedQuerySource.cs" />
     <Compile Include="Queries\IQuerySource.cs" />
     <Compile Include="Queries\Queries.cs" />
-    <Compile Include="Queries\ImmediateQuerySource.cs" />
+    <Compile Include="Queries\RowBasedQuerySource.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TaskEx.cs" />
