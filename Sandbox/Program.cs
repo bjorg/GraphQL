@@ -29,12 +29,6 @@ namespace Sandbox {
 
         //--- Class Methods ---
         private static void Main(string[] args) {
-            RunRootQuery();
-            Console.Write("Push a key to exit...");
-            Console.ReadKey();
-        }
-
-        private static void RunRootQuery() {
             /*
             {
                 page(1) {
@@ -54,7 +48,37 @@ namespace Sandbox {
                 }
             }
             */
-//            var server = new SandboxQueryServer<ImmediateQuerySource>();
+            //RunRootQueryUsingRows();
+            RunRootQueryUsingFields();
+            Console.Write("Push a key to exit...");
+            Console.ReadKey();
+        }
+
+        private static void RunRootQueryUsingRows() {
+            var server = new SandboxQueryServer<RowBasedQuerySource>();
+            var doc = server.Query(root => root.Page(1, page => TaskEx.Record(
+                (Title, Modified, Author, Subpages) => new { Title, Modified, Author, Subpages },
+                page.Title(),
+                page.Modified(),
+                page.Author(user => TaskEx.Record(
+                    (Id, Name) => new { Id, Name },
+                    user.Id(),
+                    user.Name()
+                )), page.Subpages(subpage => TaskEx.Record(
+                    (Title, Author) => new { Title, Author },
+                    subpage.Title(),
+                    subpage.Author(user => TaskEx.Record(
+                        (Id, Name) => new { Id, Name },
+                        user.Id(),
+                        user.Name()
+                    ))
+                ))
+            )).Then(Data => new { Data })).Result;
+            Console.WriteLine();
+            Console.WriteLine(JsonConvert.SerializeObject(doc, Formatting.Indented));
+        }
+
+        private static void RunRootQueryUsingFields() {
             var server = new SandboxQueryServer<FieldBasedQuerySource>();
             var doc = server.Query(root => root.Page(1, page => TaskEx.Record(
                 (Title, Modified, Author, Subpages) => new { Title, Modified, Author, Subpages },
@@ -74,6 +98,29 @@ namespace Sandbox {
                     ))
                 ))
             )).Then(Data => new { Data })).Result;
+            Console.WriteLine();
+            Console.WriteLine(JsonConvert.SerializeObject(doc, Formatting.Indented));
+        }
+
+        private static void RunRootQueryUsingExpressions() {
+            IRootQuery2 root = null;
+            var doc = new {
+                Data = root.Page(1, page => new {
+                    page.Title,
+                    page.Modified,
+                    Author = page.Author(user => new {
+                        user.Id,
+                        user.Name
+                    }),
+                    Subpages = page.Subpages(subpage => new {
+                        subpage.Title,
+                        Author = subpage.Author(user => new {
+                            user.Id,
+                            user.Name
+                        })
+                    })
+                })
+            };
             Console.WriteLine();
             Console.WriteLine(JsonConvert.SerializeObject(doc, Formatting.Indented));
         }

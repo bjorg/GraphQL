@@ -20,6 +20,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -122,5 +123,28 @@ namespace Sandbox.Queries {
         public Task<int> Id() => Task.FromResult(_userId);
         public Task<string> Name() => _source.GetUserName(_userId);
         public Task<DateTime> Created() => _source.GetUserCreated(_userId);
+    }
+
+    internal interface IRootQuery2 {
+
+        //--- Methods ---
+        T Page<T>(int id, Func<IPageQuery2, T> selection);
+    }
+
+    internal interface IPageQuery2 {
+
+        //--- Methods ---
+        string Title { get; }
+        DateTime Modified { get; }
+        T Author<T>(Func<IUserQuery2, T> selection);
+        IEnumerable<T> Subpages<T>(Func<IPageQuery2, T> selection);
+    }
+
+    internal interface IUserQuery2 {
+
+        //--- Methods ---
+        int Id { get; }
+        string Name { get; }
+        DateTime Created { get; }
     }
 }
