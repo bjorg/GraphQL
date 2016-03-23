@@ -22,7 +22,8 @@
 // COCO Bugs
 // * case-sensitive in unicode constants (e.g. '\u00AD' doesn't work)
 
-using System;
+using System.Collections.Generic;
+using MindTouch.GraphQL.Syntax;
 
 COMPILER GraphQL
 
@@ -123,8 +124,9 @@ PRODUCTIONS
 		'(' Argument { Argument } ')'
 		.
 
-	Argument =
-		name ':' Value
+	Argument																		(. AGraphSyntaxValue value = null; .)
+		=
+		name ':' Value<out value>
 		.
 
 	FragmentSpread =
@@ -142,56 +144,13 @@ PRODUCTIONS
 	FragmentName =
 		name
 		.
-
-	Boolean =
-		true
-		| false
-		.
-
-	Value =
-		String
-		| Number
-		| Boolean
-		| Variable
-		| Enum
-		| List
-		| InputObject
-		.
-
-	String =
-		string
-		.
-
-	Number =
-		number
-		.
-
-	Enum =
-		name
-		.
-
-	List =
-		"[" { Value } "]"
-		.
-
-	InputObject =
-		"{" InputObjectField { InputObjectField } "}"
-		.
-
-	InputObjectField =
-		name "=" Value
-		.
-
+		
 	VariableDefinitions =
 		"(" VariableDefinition { VariableDefinition } ")"
 		.
 
-	VariableDefinition =
-		Variable ":" Type [ "=" Value ]
-		.
-
-	Variable =
-		"$" name
+	VariableDefinition =															(. AGraphSyntaxValue value = null; .)
+		Variable<out value> ":" Type [ "=" Value<out value> ]
 		.
 
 	Type =
@@ -213,6 +172,69 @@ PRODUCTIONS
 
 	Directive =
 		"@" name [ Arguments ]
+		.
+
+	Value<out AGraphSyntaxValue value>												(. value = null; .)
+		= Boolean<out value>
+		| Number<out value>
+		| String<out value>
+		| Enum<out value>
+		| Variable<out value>
+		| List<out value>
+		| InputObject<out value>
+		.
+
+	Boolean<out AGraphSyntaxValue value>											(. value = null; .)
+		= true																		(. value = new GraphSyntaxLiteralBool(true); .)
+		| false																		(. value = new GraphSyntaxLiteralBool(false); .)
+		.
+
+	Number<out AGraphSyntaxValue value> =
+		number																		(. value = Utils.ToLiteralNumber(t.val); .)
+		.
+
+	String<out AGraphSyntaxValue value> =
+		string																		(. value = Utils.ToLiteralString(t.val); .)
+		.
+
+	Enum<out AGraphSyntaxValue value>												(. string name = null; .)
+		=
+		Name<out name>																(. value = new GraphSyntaxLiteralEnum(name); .)
+		.
+
+	Variable<out AGraphSyntaxValue value>											(. string name = null; .)
+		=
+		"$" Name<out name>															(. value = new GraphSyntaxVariable(name); .)
+		.
+
+	List<out AGraphSyntaxValue value>												(. value = null; var values = new List<AGraphSyntaxValue>(); .)
+		=
+		"[" { 
+			Value<out value>														(. values.Add(value); .)
+		} "]"																		(. value = new GraphSyntaxList(values); .)
+		.
+
+	InputObject<out AGraphSyntaxValue value>										(. 
+																						value = null; 
+																						var fields = new List<GraphSyntaxInputObject.Field>(); 
+																						GraphSyntaxInputObject.Field field = null;
+																					.)
+		=
+		"{" 
+			InputObjectField<out field>												(. fields.Add(field); .)
+			{ 
+				InputObjectField<out field>											(. fields.Add(field); .)
+			} 
+		"}"																			(. value = new GraphSyntaxInputObject(fields); .)
+		.
+
+	InputObjectField<out GraphSyntaxInputObject.Field field>						(. AGraphSyntaxValue value = null; string name = null; .)
+		=
+		Name<out name> "=" Value<out value>											(. field = new GraphSyntaxInputObject.Field(name, value); .)
+		.
+
+	Name<out string name>
+		= name																		(. name = t.val; .)
 		.
 
 END GraphQL.

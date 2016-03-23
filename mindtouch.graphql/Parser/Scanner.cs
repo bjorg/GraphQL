@@ -197,12 +197,12 @@ internal class Scanner {
 		start[58] = 31; 
 		start[40] = 32; 
 		start[41] = 33; 
-		start[91] = 34; 
-		start[93] = 35; 
-		start[61] = 36; 
-		start[36] = 37; 
-		start[33] = 38; 
-		start[64] = 39; 
+		start[61] = 34; 
+		start[33] = 35; 
+		start[91] = 36; 
+		start[93] = 37; 
+		start[64] = 38; 
+		start[36] = 39; 
 		start[Buffer.EOF] = -1;
 
 // ReSharper restore SuggestUseVarKeywordEverywhere

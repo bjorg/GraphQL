@@ -1,4 +1,5 @@
-using System;
+using System.Collections.Generic;
+using MindTouch.GraphQL.Syntax;
 
 
 
@@ -119,7 +120,7 @@ internal class GraphQLParser {
 			if (la.kind == 13) {
 				VariableDefinitions();
 			}
-			if (la.kind == 22) {
+			if (la.kind == 21) {
 				Directives();
 			}
 			SelectionSet();
@@ -131,7 +132,7 @@ internal class GraphQLParser {
 		FragmentName();
 		Expect(15);
 		NamedType();
-		if (la.kind == 22) {
+		if (la.kind == 21) {
 			Directives();
 		}
 		SelectionSet();
@@ -161,7 +162,7 @@ internal class GraphQLParser {
 	void VariableDefinitions() {
 		Expect(13);
 		VariableDefinition();
-		while (la.kind == 20) {
+		while (la.kind == 22) {
 			VariableDefinition();
 		}
 		Expect(14);
@@ -169,7 +170,7 @@ internal class GraphQLParser {
 
 	void Directives() {
 		Directive();
-		while (la.kind == 22) {
+		while (la.kind == 21) {
 			Directive();
 		}
 	}
@@ -189,7 +190,7 @@ internal class GraphQLParser {
 		if (la.kind == 13) {
 			Arguments();
 		}
-		if (la.kind == 22) {
+		if (la.kind == 21) {
 			Directives();
 		}
 		if (la.kind == 9) {
@@ -199,7 +200,7 @@ internal class GraphQLParser {
 
 	void FragmentSpread() {
 		FragmentName();
-		if (la.kind == 22) {
+		if (la.kind == 21) {
 			Directives();
 		}
 	}
@@ -207,7 +208,7 @@ internal class GraphQLParser {
 	void InlineFragment() {
 		Expect(15);
 		NamedType();
-		if (la.kind == 22) {
+		if (la.kind == 21) {
 			Directives();
 		}
 		SelectionSet();
@@ -231,39 +232,41 @@ internal class GraphQLParser {
 	}
 
 	void Argument() {
+		AGraphSyntaxValue value = null; 
 		Expect(1);
 		Expect(12);
-		Value();
+		Value(out value);
 	}
 
-	void Value() {
+	void Value(out AGraphSyntaxValue value) {
+		value = null; 
 		switch (la.kind) {
-		case 2: {
-			String();
+		case 4: case 5: {
+			Boolean(out value);
 			break;
 		}
 		case 3: {
-			Number();
+			Number(out value);
 			break;
 		}
-		case 4: case 5: {
-			Boolean();
-			break;
-		}
-		case 20: {
-			Variable();
+		case 2: {
+			String(out value);
 			break;
 		}
 		case 1: {
-			Enum();
+			Enum(out value);
 			break;
 		}
-		case 17: {
-			List();
+		case 22: {
+			Variable(out value);
+			break;
+		}
+		case 19: {
+			List(out value);
 			break;
 		}
 		case 9: {
-			InputObject();
+			InputObject(out value);
 			break;
 		}
 		default: SynErr(28); break;
@@ -278,90 +281,117 @@ internal class GraphQLParser {
 		Expect(1);
 	}
 
-	void Boolean() {
-		if (la.kind == 4) {
-			Get();
-		} else if (la.kind == 5) {
-			Get();
-		} else SynErr(29);
-	}
-
-	void String() {
-		Expect(2);
-	}
-
-	void Number() {
-		Expect(3);
-	}
-
-	void Variable() {
-		Expect(20);
-		Expect(1);
-	}
-
-	void Enum() {
-		Expect(1);
-	}
-
-	void List() {
-		Expect(17);
-		while (StartOf(2)) {
-			Value();
-		}
-		Expect(18);
-	}
-
-	void InputObject() {
-		Expect(9);
-		InputObjectField();
-		while (la.kind == 1) {
-			InputObjectField();
-		}
-		Expect(10);
-	}
-
-	void InputObjectField() {
-		Expect(1);
-		Expect(19);
-		Value();
-	}
-
 	void VariableDefinition() {
-		Variable();
+		AGraphSyntaxValue value = null; 
+		Variable(out value);
 		Expect(12);
 		Type();
-		if (la.kind == 19) {
+		if (la.kind == 17) {
 			Get();
-			Value();
+			Value(out value);
 		}
+	}
+
+	void Variable(out AGraphSyntaxValue value) {
+		string name = null; 
+		Expect(22);
+		Name(out name);
+		value = new GraphSyntaxVariable(name); 
 	}
 
 	void Type() {
 		if (la.kind == 1) {
 			NamedType();
-			if (la.kind == 21) {
+			if (la.kind == 18) {
 				Get();
 			}
-		} else if (la.kind == 17) {
+		} else if (la.kind == 19) {
 			ListType();
-			if (la.kind == 21) {
+			if (la.kind == 18) {
 				Get();
 			}
-		} else SynErr(30);
+		} else SynErr(29);
 	}
 
 	void ListType() {
-		Expect(17);
+		Expect(19);
 		Type();
-		Expect(18);
+		Expect(20);
 	}
 
 	void Directive() {
-		Expect(22);
+		Expect(21);
 		Expect(1);
 		if (la.kind == 13) {
 			Arguments();
 		}
+	}
+
+	void Boolean(out AGraphSyntaxValue value) {
+		value = null; 
+		if (la.kind == 4) {
+			Get();
+			value = new GraphSyntaxLiteralBool(true); 
+		} else if (la.kind == 5) {
+			Get();
+			value = new GraphSyntaxLiteralBool(false); 
+		} else SynErr(30);
+	}
+
+	void Number(out AGraphSyntaxValue value) {
+		Expect(3);
+		value = Utils.ToLiteralNumber(t.val); 
+	}
+
+	void String(out AGraphSyntaxValue value) {
+		Expect(2);
+		value = Utils.ToLiteralString(t.val); 
+	}
+
+	void Enum(out AGraphSyntaxValue value) {
+		string name = null; 
+		Name(out name);
+		value = new GraphSyntaxLiteralEnum(name); 
+	}
+
+	void List(out AGraphSyntaxValue value) {
+		value = null; var values = new List<AGraphSyntaxValue>(); 
+		Expect(19);
+		while (StartOf(2)) {
+			Value(out value);
+			values.Add(value); 
+		}
+		Expect(20);
+		value = new GraphSyntaxList(values); 
+	}
+
+	void InputObject(out AGraphSyntaxValue value) {
+		value = null; 
+		var fields = new List<GraphSyntaxInputObject.Field>(); 
+		GraphSyntaxInputObject.Field field = null;
+		
+		Expect(9);
+		InputObjectField(out field);
+		fields.Add(field); 
+		while (la.kind == 1) {
+			InputObjectField(out field);
+			fields.Add(field); 
+		}
+		Expect(10);
+		value = new GraphSyntaxInputObject(fields); 
+	}
+
+	void Name(out string name) {
+		Expect(1);
+		name = t.val; 
+	}
+
+	void InputObjectField(out GraphSyntaxInputObject.Field field) {
+		AGraphSyntaxValue value = null; string name = null; 
+		Name(out name);
+		Expect(17);
+		Value(out value);
+		field = new GraphSyntaxInputObject.Field(name, value); 
 	}
 
 
@@ -377,7 +407,7 @@ internal class GraphQLParser {
 	static readonly bool[,] set = {
 		{T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x},
 		{x,x,x,x, x,x,x,T, T,T,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x},
-		{x,T,T,T, T,T,x,x, x,T,x,x, x,x,x,x, x,T,x,x, T,x,x,x, x}
+		{x,T,T,T, T,T,x,x, x,T,x,x, x,x,x,x, x,x,x,T, x,x,T,x, x}
 
 	};
 } // end Parser
@@ -404,20 +434,20 @@ internal class Errors {
 			case 14: s = "\")\" expected"; break;
 			case 15: s = "\"on\" expected"; break;
 			case 16: s = "\"fragment\" expected"; break;
-			case 17: s = "\"[\" expected"; break;
-			case 18: s = "\"]\" expected"; break;
-			case 19: s = "\"=\" expected"; break;
-			case 20: s = "\"$\" expected"; break;
-			case 21: s = "\"!\" expected"; break;
-			case 22: s = "\"@\" expected"; break;
+			case 17: s = "\"=\" expected"; break;
+			case 18: s = "\"!\" expected"; break;
+			case 19: s = "\"[\" expected"; break;
+			case 20: s = "\"]\" expected"; break;
+			case 21: s = "\"@\" expected"; break;
+			case 22: s = "\"$\" expected"; break;
 			case 23: s = "??? expected"; break;
 			case 24: s = "invalid Definition"; break;
 			case 25: s = "invalid OperationDefinition"; break;
 			case 26: s = "invalid OperationType"; break;
 			case 27: s = "invalid Selection"; break;
 			case 28: s = "invalid Value"; break;
-			case 29: s = "invalid Boolean"; break;
-			case 30: s = "invalid Type"; break;
+			case 29: s = "invalid Type"; break;
+			case 30: s = "invalid Boolean"; break;
 
 			default: s = "error " + n; break;
 		}
