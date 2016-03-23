@@ -46,7 +46,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Parser\GraphQLException.cs" />
+    <Compile Include="Parser\GraphException.cs" />
     <Compile Include="Parser\Location.cs" />
     <Compile Include="Parser\Parser.cs" />
     <Compile Include="Parser\Scanner.cs" />

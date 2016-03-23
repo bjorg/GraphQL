@@ -141,15 +141,15 @@ internal GraphSyntaxDocument Result;
 				Directives();
 			}
 			SelectionSet(out selectionSet);
-			definition = new GraphSyntaxOperationDefinition(
-			type,
-			name,
-			variables,
-			directives,
-			selectionSet
-			); 
-			
 		} else SynErr(25);
+		definition = new GraphSyntaxOperationDefinition(
+		type,
+		name,
+		variables,
+		directives,
+		selectionSet
+		); 
+		
 	}
 
 	void FragmentDefinition() {
@@ -494,11 +494,11 @@ internal class Errors {
 
 			default: s = "error " + n; break;
 		}
-		throw new GraphQLParserException(new Location(origin, path, line, col), s);
+		throw new GraphParserException(new Location(origin, path, line, col), s);
 	}
 
 	public void SemErr(string origin, string path, int line, int col, string s) {
-		throw new GraphQLParserException(new Location(origin, path, line, col), s);
+		throw new GraphParserException(new Location(origin, path, line, col), s);
 	}
 	
 	public void Warning(int line, int col, string s) {

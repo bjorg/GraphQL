@@ -55,10 +55,10 @@ TOKENS
 		.
 	
 	number =
-		[ "-" ] (
+		[ "-" | "+" ] (
 			digit { digit } 
-			| "." digit { digit } ["e" ["+" | "-"] digit { digit }]
-			| digit { digit } ( "." digit {digit} ["e" ["+" | "-"] digit { digit }] | "e" ["+" | "-"] digit { digit })
+			| "." digit { digit } [ "e" [ "+" | "-" ] digit { digit }]
+			| digit { digit } ( "." digit { digit } [ "e" [ "+" | "-" ] digit { digit }] | "e" [ "+" | "-" ] digit { digit })
 		)
 		.
 
@@ -103,12 +103,15 @@ PRODUCTIONS
 																						var variables = Enumerable.Empty<GraphSyntaxOperationDefinition.Variable>();
 																						var directives = Enumerable.Empty<GraphSyntaxDirective>();
 																					.)
-		= SelectionSet<out selectionSet>
-		| OperationType<out type>
-		[ Name<out name> ] 
-		[ VariableDefinitions ] 
-		[ Directives ] 
-		SelectionSet<out selectionSet>												(. 
+		= (
+			SelectionSet<out selectionSet>
+			| 
+			OperationType<out type>
+			[ Name<out name> ] 
+			[ VariableDefinitions ] 
+			[ Directives ] 
+			SelectionSet<out selectionSet>
+		)																			(. 
 																						definition = new GraphSyntaxOperationDefinition(
 																							type,
 																							name,

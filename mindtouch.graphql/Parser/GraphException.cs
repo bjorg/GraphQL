@@ -1,5 +1,5 @@
 ﻿/*
- * MindTouch GraphQL 
+ * MindTouch GraphQL
  * Copyright (C) 2006-2016 MindTouch, Inc.
  * www.mindtouch.com  oss@mindtouch.com
  *
@@ -9,9 +9,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,28 +22,31 @@
 using System;
 
 namespace MindTouch.GraphQL.Parser {
-    public abstract class GraphQLException : Exception {
+
+    public abstract class GraphException : Exception {
 
         //--- Fields ---
         public Location Location;
 
         //--- Constructors ---
-        protected GraphQLException(Location location) {
-            this.Location = location;
+        protected GraphException(Location location) {
+            Location = location;
         }
 
-        protected GraphQLException(Location location, string message) : base(message) {
-            this.Location = location;
+        protected GraphException(Location location, string message) : base(message) {
+            Location = location;
         }
 
-        protected GraphQLException(Location location, string message, Exception inner) : base(message, inner) {
-            this.Location = location;
+        protected GraphException(Location location, string message, Exception inner) : base(message, inner) {
+            Location = location;
         }
     }
 
-    public class GraphQLParserException : GraphQLException {
+    public class GraphParserException : GraphException {
 
         //--- Constructors ---
-        public GraphQLParserException(Location location, string message) : base(location, message) { }
+        public GraphParserException(Location location, string message) : base(location, message) { }
+
+        public GraphParserException(Location location, string message, Exception inner) : base(location, message, inner) { }
     }
 }

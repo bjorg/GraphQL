@@ -190,7 +190,8 @@ internal class Scanner {
 		for (int i = 48; i <= 57; ++i) start[i] = 24;
 		start[34] = 2; 
 		start[46] = 40; 
-		start[45] = 8; 
+		for (int i = 43; i <= 43; ++i) start[i] = 8;
+		for (int i = 45; i <= 45; ++i) start[i] = 8;
 		start[35] = 22; 
 		start[123] = 27; 
 		start[125] = 28; 
