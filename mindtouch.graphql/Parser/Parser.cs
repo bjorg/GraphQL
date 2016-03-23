@@ -54,6 +54,8 @@ internal class GraphQLParser {
 	public Token la;   // lookahead token
 	int errDist = minErrDist;
 	
+internal GraphSyntaxDocument Result;
+
 
 
 	public GraphQLParser(Scanner scanner) {
@@ -92,32 +94,45 @@ internal class GraphQLParser {
 	}
 	
 	void GraphQL() {
-		Document();
+		Document(out Result);
 	}
 
-	void Document() {
-		Definition();
+	void Document(out GraphSyntaxDocument doc) {
+		var definitions = new List<AGraphSyntaxDefinition>();
+		AGraphSyntaxDefinition definition = null;
+		
+		Definition(out definition);
+		definitions.Add(definition); 
 		while (StartOf(1)) {
-			Definition();
+			Definition(out definition);
+			definitions.Add(definition); 
 		}
+		doc = new GraphSyntaxDocument(definitions); 
 	}
 
-	void Definition() {
+	void Definition(out AGraphSyntaxDefinition definition) {
+		definition = null; 
 		if (la.kind == 7 || la.kind == 8 || la.kind == 9) {
-			OperationDefinition();
+			OperationDefinition(out definition);
 		} else if (la.kind == 16) {
 			FragmentDefinition();
 		} else SynErr(24);
 	}
 
-	void OperationDefinition() {
-		GraphSyntaxSelectionSet set = null; 
+	void OperationDefinition(out AGraphSyntaxDefinition definition) {
+		definition = null;
+		GraphSyntaxSelectionSet selectionSet = null; 
+		var type = GraphSyntaxOperationType.Query;
+		string name = null;
+		var variables = Enumerable.Empty<GraphSyntaxOperationDefinition.Variable>();
+		var directives = Enumerable.Empty<GraphSyntaxDirective>();
+		
 		if (la.kind == 9) {
-			SelectionSet(out set);
+			SelectionSet(out selectionSet);
 		} else if (la.kind == 7 || la.kind == 8) {
-			OperationType();
+			OperationType(out type);
 			if (la.kind == 1) {
-				OperationName();
+				Name(out name);
 			}
 			if (la.kind == 13) {
 				VariableDefinitions();
@@ -125,7 +140,15 @@ internal class GraphQLParser {
 			if (la.kind == 21) {
 				Directives();
 			}
-			SelectionSet(out set);
+			SelectionSet(out selectionSet);
+			definition = new GraphSyntaxOperationDefinition(
+			type,
+			name,
+			variables,
+			directives,
+			selectionSet
+			); 
+			
 		} else SynErr(25);
 	}
 
@@ -156,16 +179,20 @@ internal class GraphQLParser {
 		set = new GraphSyntaxSelectionSet(selections); 
 	}
 
-	void OperationType() {
+	void OperationType(out GraphSyntaxOperationType type) {
+		type = GraphSyntaxOperationType.Query; 
 		if (la.kind == 7) {
 			Get();
+			type = GraphSyntaxOperationType.Query; 
 		} else if (la.kind == 8) {
 			Get();
+			type = GraphSyntaxOperationType.Mutation; 
 		} else SynErr(26);
 	}
 
-	void OperationName() {
+	void Name(out string name) {
 		Expect(1);
+		name = t.val; 
 	}
 
 	void VariableDefinitions() {
@@ -241,11 +268,6 @@ internal class GraphQLParser {
 			Directives();
 		}
 		SelectionSet(out set);
-	}
-
-	void Name(out string name) {
-		Expect(1);
-		name = t.val; 
 	}
 
 	void Arguments() {

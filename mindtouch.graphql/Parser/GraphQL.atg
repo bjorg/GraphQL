@@ -28,6 +28,8 @@ using MindTouch.GraphQL.Syntax;
 
 COMPILER GraphQL
 
+	internal GraphSyntaxDocument Result;
+
 CHARACTERS
 	tab = '\t'.
 	nl = '\n'.
@@ -74,32 +76,52 @@ IGNORE nl + cr + tab + comma
 
 PRODUCTIONS
 
-	GraphQL =
-		Document
+	GraphQL
+		= Document<out Result>
 		.
 
-	Document =
-		Definition { Definition }
+	Document<out GraphSyntaxDocument doc>											(.
+																						var definitions = new List<AGraphSyntaxDefinition>();
+																						AGraphSyntaxDefinition definition = null;
+																					.)
+		= Definition<out definition>												(. definitions.Add(definition); .)
+		{ 
+			Definition<out definition>												(. definitions.Add(definition); .)
+		}																			(. doc = new GraphSyntaxDocument(definitions); .)
 		.
 
-	Definition =
-		OperationDefinition
+	Definition<out AGraphSyntaxDefinition definition>								(. definition = null; .)
+		= OperationDefinition<out definition>
 		| FragmentDefinition
 		.
 
-	OperationDefinition																(. GraphSyntaxSelectionSet set = null; .)
-		=
-		SelectionSet<out set>
-		| OperationType [ OperationName ] [ VariableDefinitions ] [ Directives ] SelectionSet<out set>
+	OperationDefinition<out AGraphSyntaxDefinition definition>						(. 
+																						definition = null;
+																						GraphSyntaxSelectionSet selectionSet = null; 
+																						var type = GraphSyntaxOperationType.Query;
+																						string name = null;
+																						var variables = Enumerable.Empty<GraphSyntaxOperationDefinition.Variable>();
+																						var directives = Enumerable.Empty<GraphSyntaxDirective>();
+																					.)
+		= SelectionSet<out selectionSet>
+		| OperationType<out type>
+		[ Name<out name> ] 
+		[ VariableDefinitions ] 
+		[ Directives ] 
+		SelectionSet<out selectionSet>												(. 
+																						definition = new GraphSyntaxOperationDefinition(
+																							type,
+																							name,
+																							variables,
+																							directives,
+																							selectionSet
+																						); 
+																					.)
 		.
 
-	OperationName =
-		name
-		.
-
-	OperationType =
-		"query"
-		| "mutation"
+	OperationType<out GraphSyntaxOperationType type>								(. type = GraphSyntaxOperationType.Query; .)
+		= "query"																	(. type = GraphSyntaxOperationType.Query; .)
+		| "mutation"																(. type = GraphSyntaxOperationType.Mutation; .)
 		.
 
 	SelectionSet<out GraphSyntaxSelectionSet set>									(. 

@@ -63,10 +63,13 @@
     <Compile Include="Schema\GraphTypeSchema.cs" />
     <Compile Include="Schema\GraphTypeUnion.cs" />
     <Compile Include="Schema\GraphUtils.cs" />
+    <Compile Include="Syntax\AGraphSyntaxDefinition.cs" />
     <Compile Include="Syntax\AGraphSyntaxSelection.cs" />
     <Compile Include="Syntax\AGraphSyntaxValue.cs" />
     <Compile Include="Syntax\GraphSyntaxArgument.cs" />
     <Compile Include="Syntax\GraphSyntaxDirective.cs" />
+    <Compile Include="Syntax\GraphSyntaxDocument.cs" />
+    <Compile Include="Syntax\GraphSyntaxOperationDefinition.cs" />
     <Compile Include="Syntax\GraphSyntaxSelectionField.cs" />
     <Compile Include="Syntax\GraphSyntaxFragmentSpread.cs" />
     <Compile Include="Syntax\GraphSyntaxInlineFragment.cs" />
