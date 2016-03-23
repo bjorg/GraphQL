@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using MindTouch.GraphQL.Syntax;
 
 
@@ -110,8 +111,9 @@ internal class GraphQLParser {
 	}
 
 	void OperationDefinition() {
+		GraphSyntaxSelectionSet set = null; 
 		if (la.kind == 9) {
-			SelectionSet();
+			SelectionSet(out set);
 		} else if (la.kind == 7 || la.kind == 8) {
 			OperationType();
 			if (la.kind == 1) {
@@ -123,11 +125,12 @@ internal class GraphQLParser {
 			if (la.kind == 21) {
 				Directives();
 			}
-			SelectionSet();
+			SelectionSet(out set);
 		} else SynErr(25);
 	}
 
 	void FragmentDefinition() {
+		GraphSyntaxSelectionSet set = null; 
 		Expect(16);
 		FragmentName();
 		Expect(15);
@@ -135,16 +138,22 @@ internal class GraphQLParser {
 		if (la.kind == 21) {
 			Directives();
 		}
-		SelectionSet();
+		SelectionSet(out set);
 	}
 
-	void SelectionSet() {
+	void SelectionSet(out GraphSyntaxSelectionSet set) {
+		var selections = new List<AGraphSyntaxSelection>();
+		AGraphSyntaxSelection selection = null;
+		
 		Expect(9);
-		Selection();
+		Selection(out selection);
+		selections.Add(selection); 
 		while (la.kind == 1 || la.kind == 11) {
-			Selection();
+			Selection(out selection);
+			selections.Add(selection); 
 		}
 		Expect(10);
+		set = new GraphSyntaxSelectionSet(selections); 
 	}
 
 	void OperationType() {
@@ -175,9 +184,10 @@ internal class GraphQLParser {
 		}
 	}
 
-	void Selection() {
+	void Selection(out AGraphSyntaxSelection selection) {
+		selection = null; 
 		if (la.kind == 1) {
-			Field();
+			Field(out selection);
 		} else if (la.kind == 11) {
 			Get();
 			FragmentSpread();
@@ -185,8 +195,18 @@ internal class GraphQLParser {
 		} else SynErr(27);
 	}
 
-	void Field() {
-		FieldName();
+	void Field(out AGraphSyntaxSelection field) {
+		string prefix = null;
+		string name = null;
+		var arguments = Enumerable.Empty<GraphSyntaxArgument>();
+		var directives = Enumerable.Empty<GraphSyntaxDirective>();
+		GraphSyntaxSelectionSet set = null;
+		
+		Name(out prefix);
+		if (la.kind == 12) {
+			Get();
+			Name(out name);
+		}
 		if (la.kind == 13) {
 			Arguments();
 		}
@@ -194,8 +214,16 @@ internal class GraphQLParser {
 			Directives();
 		}
 		if (la.kind == 9) {
-			SelectionSet();
+			SelectionSet(out set);
 		}
+		field = new GraphSyntaxSelectionField(
+		prefix, 
+		name ?? prefix, 
+		arguments, 
+		directives, 
+		set
+		);
+		
 	}
 
 	void FragmentSpread() {
@@ -206,20 +234,18 @@ internal class GraphQLParser {
 	}
 
 	void InlineFragment() {
+		GraphSyntaxSelectionSet set = null; 
 		Expect(15);
 		NamedType();
 		if (la.kind == 21) {
 			Directives();
 		}
-		SelectionSet();
+		SelectionSet(out set);
 	}
 
-	void FieldName() {
+	void Name(out string name) {
 		Expect(1);
-		if (la.kind == 12) {
-			Get();
-			Expect(1);
-		}
+		name = t.val; 
 	}
 
 	void Arguments() {
@@ -379,11 +405,6 @@ internal class GraphQLParser {
 		}
 		Expect(10);
 		value = new GraphSyntaxInputObject(fields); 
-	}
-
-	void Name(out string name) {
-		Expect(1);
-		name = t.val; 
 	}
 
 	void InputObjectField(out GraphSyntaxInputObject.Field field) {

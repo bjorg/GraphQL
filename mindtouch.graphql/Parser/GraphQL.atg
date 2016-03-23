@@ -23,6 +23,7 @@
 // * case-sensitive in unicode constants (e.g. '\u00AD' doesn't work)
 
 using System.Collections.Generic;
+using System.Linq;
 using MindTouch.GraphQL.Syntax;
 
 COMPILER GraphQL
@@ -86,9 +87,10 @@ PRODUCTIONS
 		| FragmentDefinition
 		.
 
-	OperationDefinition =
-		SelectionSet
-		| OperationType [ OperationName ] [ VariableDefinitions ] [ Directives ] SelectionSet
+	OperationDefinition																(. GraphSyntaxSelectionSet set = null; .)
+		=
+		SelectionSet<out set>
+		| OperationType [ OperationName ] [ VariableDefinitions ] [ Directives ] SelectionSet<out set>
 		.
 
 	OperationName =
@@ -100,24 +102,48 @@ PRODUCTIONS
 		| "mutation"
 		.
 
-	SelectionSet =
-		"{" Selection { Selection } "}"
+	SelectionSet<out GraphSyntaxSelectionSet set>									(. 
+																						var selections = new List<AGraphSyntaxSelection>();
+																						AGraphSyntaxSelection selection = null;
+																					.)
+		=
+		"{"
+			Selection<out selection>												(. selections.Add(selection); .)
+			{ 
+				Selection<out selection>											(. selections.Add(selection); .)
+			} 
+		"}"																			(. set = new GraphSyntaxSelectionSet(selections); .)
 		.
 
-	Selection =
-		Field
+	Selection<out AGraphSyntaxSelection selection>									(. selection = null; .)
+		= Field<out selection>
 		| "..." (
 			FragmentSpread
 			InlineFragment
 		)
 		.
 
-	Field =
-		FieldName [ Arguments ] [ Directives ] [ SelectionSet ]
-		.
-
-	FieldName =
-		name [ ":" name ]
+	Field<out AGraphSyntaxSelection field>										(.
+																						string prefix = null;
+																						string name = null;
+																						var arguments = Enumerable.Empty<GraphSyntaxArgument>();
+																						var directives = Enumerable.Empty<GraphSyntaxDirective>();
+																						GraphSyntaxSelectionSet set = null;
+																					.)
+		=
+		Name<out prefix> 
+		[ ":" Name<out name> ] 
+		[ Arguments ] 
+		[ Directives ] 
+		[ SelectionSet<out set> ]													(.
+																						field = new GraphSyntaxSelectionField(
+																							prefix, 
+																							name ?? prefix, 
+																							arguments, 
+																							directives, 
+																							set
+																						);
+																					.)
 		.
 
 	Arguments =
@@ -133,12 +159,14 @@ PRODUCTIONS
 		FragmentName [ Directives ]
 		.
 
-	InlineFragment =
-		"on" NamedType [ Directives ] SelectionSet
+	InlineFragment																	(. GraphSyntaxSelectionSet set = null; .)
+		=
+		"on" NamedType [ Directives ] SelectionSet<out set>
 		.
 
-	FragmentDefinition =
-		"fragment" FragmentName "on" NamedType [ Directives ] SelectionSet
+	FragmentDefinition																(. GraphSyntaxSelectionSet set = null; .)
+		=
+		"fragment" FragmentName "on" NamedType [ Directives ] SelectionSet<out set>
 		.
 
 	FragmentName =

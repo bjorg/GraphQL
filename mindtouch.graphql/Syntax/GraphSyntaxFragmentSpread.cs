@@ -21,21 +21,20 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 
 namespace MindTouch.GraphQL.Syntax {
 
-    public abstract class AGraphSyntaxSelection {
+    public sealed class GraphSyntaxFragmentSpread : AGraphSyntaxSelection {
 
         //--- Fields ---
-        public readonly ImmutableArray<GraphSyntaxDirective> Directives;
+        public readonly string Name;
 
         //--- Constructors ---
-        protected AGraphSyntaxSelection(IEnumerable<GraphSyntaxDirective> directives) {
-            if(directives == null) {
-                throw new ArgumentNullException(nameof(directives));
+        public GraphSyntaxFragmentSpread(string name, IEnumerable<GraphSyntaxDirective> directives) : base(directives) {
+            if(name == null) {
+                throw new ArgumentNullException(nameof(name));
             }
-            Directives = directives.ToImmutableArray();
+            Name = name;
         }
     }
 }

@@ -25,17 +25,26 @@ using System.Collections.Immutable;
 
 namespace MindTouch.GraphQL.Syntax {
 
-    public abstract class AGraphSyntaxSelection {
+    public sealed class GraphSyntaxSelectionField : AGraphSyntaxSelection {
 
         //--- Fields ---
-        public readonly ImmutableArray<GraphSyntaxDirective> Directives;
+        public readonly string Alias;
+        public readonly string Name;
+        public readonly ImmutableArray<GraphSyntaxArgument> Arguments;
+        public readonly GraphSyntaxSelectionSet SelectionSet;
 
         //--- Constructors ---
-        protected AGraphSyntaxSelection(IEnumerable<GraphSyntaxDirective> directives) {
-            if(directives == null) {
-                throw new ArgumentNullException(nameof(directives));
+        public GraphSyntaxSelectionField(string alias, string name, IEnumerable<GraphSyntaxArgument> arguments, IEnumerable<GraphSyntaxDirective> directives, GraphSyntaxSelectionSet selectionSet) : base(directives) {
+            if(name == null) {
+                throw new ArgumentNullException(nameof(name));
             }
-            Directives = directives.ToImmutableArray();
+            if(arguments == null) {
+                throw new ArgumentNullException(nameof(arguments));
+            }
+            Alias = alias;
+            Name = name;
+            Arguments = arguments.ToImmutableArray();
+            SelectionSet = selectionSet;
         }
     }
 }

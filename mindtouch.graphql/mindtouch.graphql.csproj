@@ -50,6 +50,7 @@
     <Compile Include="Parser\Location.cs" />
     <Compile Include="Parser\Parser.cs" />
     <Compile Include="Parser\Scanner.cs" />
+    <Compile Include="Parser\Utils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Schema\AGraphType.cs" />
     <Compile Include="Schema\GraphTypeScalar.cs" />
@@ -66,6 +67,9 @@
     <Compile Include="Syntax\AGraphSyntaxValue.cs" />
     <Compile Include="Syntax\GraphSyntaxArgument.cs" />
     <Compile Include="Syntax\GraphSyntaxDirective.cs" />
+    <Compile Include="Syntax\GraphSyntaxSelectionField.cs" />
+    <Compile Include="Syntax\GraphSyntaxFragmentSpread.cs" />
+    <Compile Include="Syntax\GraphSyntaxInlineFragment.cs" />
     <Compile Include="Syntax\GraphSyntaxSelectionSet.cs" />
     <Compile Include="Syntax\GraphSyntaxTypeName.cs" />
   </ItemGroup>

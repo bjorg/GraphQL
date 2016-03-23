@@ -19,23 +19,134 @@
  * limitations under the License.
  */
 
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+
 namespace MindTouch.GraphQL.Syntax {
 
     public abstract class AGraphSyntaxValue { }
 
-    public sealed class GraphSyntaxLiteralBool : AGraphSyntaxValue { }
+    public sealed class GraphSyntaxLiteralBool : AGraphSyntaxValue {
 
-    public sealed class GraphSyntaxLiteralInt : AGraphSyntaxValue { }
+        //--- Fields ---
+        public readonly bool Value;
 
-    public sealed class GraphSyntaxLiteralFloat : AGraphSyntaxValue { }
+        //--- Constructors ---
+        public GraphSyntaxLiteralBool(bool value) {
+            Value = value;
+        }
+    }
 
-    public sealed class GraphSyntaxLiteralString : AGraphSyntaxValue { }
+    public sealed class GraphSyntaxLiteralInt : AGraphSyntaxValue {
 
-    public sealed class GraphSyntaxLiteralEnum : AGraphSyntaxValue { }
+        //--- Fields ---
+        public readonly int Value;
 
-    public sealed class GraphSyntaxLiteralVariable : AGraphSyntaxValue { }
+        //--- Constructors ---
+        public GraphSyntaxLiteralInt(int value) {
+            Value = value;
+        }
+    }
 
-    public sealed class GraphSyntaxList : AGraphSyntaxValue { }
+    public sealed class GraphSyntaxLiteralFloat : AGraphSyntaxValue {
 
-    public sealed class GraphSyntaxInputObject : AGraphSyntaxValue { }
+        //--- Fields ---
+        public readonly double Value;
+
+        //--- Constructors ---
+        public GraphSyntaxLiteralFloat(double value) {
+            Value = value;
+        }
+    }
+
+    public sealed class GraphSyntaxLiteralString : AGraphSyntaxValue {
+
+        //--- Fields ---
+        public readonly string Value;
+
+        //--- Constructors ---
+        public GraphSyntaxLiteralString(string value) {
+            if(value == null) {
+                throw new ArgumentNullException(nameof(value));
+            }
+            Value = value;
+        }
+    }
+
+    public sealed class GraphSyntaxLiteralEnum : AGraphSyntaxValue {
+
+        //--- Fields ---
+        public readonly string Value;
+
+        //--- Constructors ---
+        public GraphSyntaxLiteralEnum(string value) {
+            if(value == null) {
+                throw new ArgumentNullException(nameof(value));
+            }
+            Value = value;
+        }
+    }
+
+    public sealed class GraphSyntaxVariable : AGraphSyntaxValue {
+
+        //--- Fields ---
+        public readonly string Name;
+
+        //--- Constructors ---
+        public GraphSyntaxVariable(string name) {
+            if(name == null) {
+                throw new ArgumentNullException(nameof(name));
+            }
+            Name = name;
+        }
+    }
+
+    public sealed class GraphSyntaxList : AGraphSyntaxValue {
+
+        //--- Fields ---
+        public readonly ImmutableArray<AGraphSyntaxValue> Values;
+
+        //--- Constructors ---
+        public GraphSyntaxList(IEnumerable<AGraphSyntaxValue> values) {
+            if(values == null) {
+                throw new ArgumentNullException(nameof(values));
+            }
+            Values = values.ToImmutableArray();
+        }
+    }
+
+    public sealed class GraphSyntaxInputObject : AGraphSyntaxValue {
+
+        //--- Types ---
+        public sealed class Field {
+
+            //--- Fields ---
+            public readonly string Name;
+            public readonly AGraphSyntaxValue Value;
+
+            //--- Constructors ---
+            public Field(string name, AGraphSyntaxValue value) {
+                if(name == null) {
+                    throw new ArgumentNullException(nameof(name));
+                }
+                if(value == null) {
+                    throw new ArgumentNullException(nameof(value));
+                }
+                Name = name;
+                Value = value;
+            }
+        }
+
+        //--- Fields ---
+        public readonly ImmutableArray<Field> Fields;
+
+        //--- Constructors ---
+        public GraphSyntaxInputObject(IEnumerable<Field> fields) {
+            if(fields == null) {
+                throw new ArgumentNullException(nameof(fields));
+            }
+            Fields = fields.ToImmutableArray();
+        }
+    }
 }
