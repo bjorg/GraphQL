@@ -25,7 +25,7 @@
 
 -->namespace
 
-internal class GraphQLParser {
+internal class Parser {
 -->constants
 	const bool T = true;
 	const bool x = false;
@@ -40,7 +40,7 @@ internal class GraphQLParser {
 	
 -->declarations
 
-	public GraphQLParser(Scanner scanner) {
+	public Parser(Scanner scanner) {
 		this.scanner = scanner;
 		errors = new Errors();
 	}

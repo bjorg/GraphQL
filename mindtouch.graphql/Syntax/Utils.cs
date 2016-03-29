@@ -19,14 +19,13 @@
  * limitations under the License.
  */
 
-using MindTouch.GraphQL.Syntax;
 using System;
 using System.Globalization;
 using System.Text;
 
-namespace MindTouch.GraphQL.Parser {
+namespace MindTouch.GraphQL.Syntax {
 
-    internal static class Utils {
+    public static class Utils {
 
         //--- Class Methods ---
         public static GraphSyntaxLiteralString ToLiteralString(string text) {
@@ -86,7 +85,7 @@ namespace MindTouch.GraphQL.Parser {
         public static GraphSyntaxDocument Parse(Location location, string source) {
             try {
                 var scanner = new Scanner(source, location.Origin, location.Path, location.Line, location.Column, -1);
-                var parser = new GraphQLParser(scanner);
+                var parser = new Parser(scanner);
                 parser.Parse();
                 return parser.Result;
             } catch(GraphParserException) {

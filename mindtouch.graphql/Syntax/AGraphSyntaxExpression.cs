@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MindTouch GraphQL
  * Copyright (C) 2006-2016 MindTouch, Inc.
  * www.mindtouch.com  oss@mindtouch.com
@@ -19,34 +19,16 @@
  * limitations under the License.
  */
 
-using System;
+namespace MindTouch.GraphQL.Syntax {
 
-namespace MindTouch.GraphQL.Parser {
-
-    public abstract class GraphException : Exception {
+    public abstract class AGraphSyntaxExpression {
 
         //--- Fields ---
-        public Location Location;
+        public readonly Location Location;
 
         //--- Constructors ---
-        protected GraphException(Location location) {
+        protected AGraphSyntaxExpression(Location location) {
             Location = location;
         }
-
-        protected GraphException(Location location, string message) : base(message) {
-            Location = location;
-        }
-
-        protected GraphException(Location location, string message, Exception inner) : base(message, inner) {
-            Location = location;
-        }
-    }
-
-    public class GraphParserException : GraphException {
-
-        //--- Constructors ---
-        public GraphParserException(Location location, string message) : base(location, message) { }
-
-        public GraphParserException(Location location, string message, Exception inner) : base(location, message, inner) { }
     }
 }

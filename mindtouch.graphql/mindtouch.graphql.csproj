@@ -34,7 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.8.0.2\lib\net40\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -46,11 +46,12 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Parser\GraphException.cs" />
-    <Compile Include="Parser\Location.cs" />
-    <Compile Include="Parser\Parser.cs" />
-    <Compile Include="Parser\Scanner.cs" />
-    <Compile Include="Parser\Utils.cs" />
+    <Compile Include="Syntax\AGraphSyntaxExpression.cs" />
+    <Compile Include="Syntax\GraphException.cs" />
+    <Compile Include="Syntax\Location.cs" />
+    <Compile Include="Syntax\Parser.cs" />
+    <Compile Include="Syntax\Scanner.cs" />
+    <Compile Include="Syntax\Utils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Schema\AGraphType.cs" />
     <Compile Include="Schema\GraphTypeScalar.cs" />
@@ -76,12 +77,14 @@
     <Compile Include="Syntax\GraphSyntaxSelectionSet.cs" />
     <Compile Include="Syntax\GraphSyntaxTypeName.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Parser\" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="Parser\GraphQL.atg" />
-    <None Include="Parser\Parser.frame" />
-    <None Include="Parser\Scanner.frame" />
+    <None Include="Syntax\GraphQL.atg" />
+    <None Include="Syntax\Parser.frame" />
+    <None Include="Syntax\Scanner.frame" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

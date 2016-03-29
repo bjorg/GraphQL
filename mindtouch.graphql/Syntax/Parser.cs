@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using MindTouch.GraphQL.Syntax;
 
 
 
@@ -28,11 +27,11 @@ using MindTouch.GraphQL.Syntax;
 // ReSharper disable TooWideLocalVariableScope
 // ReSharper disable JoinDeclarationAndInitializer
 
-namespace MindTouch.GraphQL.Parser {
+namespace MindTouch.GraphQL.Syntax {
 
 
 
-internal class GraphQLParser {
+internal class Parser {
 	public const int _EOF = 0;
 	public const int _name = 1;
 	public const int _string = 2;
@@ -58,7 +57,7 @@ internal GraphSyntaxDocument Result;
 
 
 
-	public GraphQLParser(Scanner scanner) {
+	public Parser(Scanner scanner) {
 		this.scanner = scanner;
 		errors = new Errors();
 	}

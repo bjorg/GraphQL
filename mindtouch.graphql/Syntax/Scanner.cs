@@ -23,7 +23,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace MindTouch.GraphQL.Parser {
+namespace MindTouch.GraphQL.Syntax {
 
 internal class Token {
 	public int kind;    // token kind

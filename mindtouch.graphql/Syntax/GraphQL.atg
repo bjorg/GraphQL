@@ -24,10 +24,10 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using MindTouch.GraphQL.Syntax;
 
 COMPILER GraphQL
 
+	//--- Fields ---
 	internal GraphSyntaxDocument Result;
 
 CHARACTERS
