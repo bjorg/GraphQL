@@ -132,7 +132,7 @@ namespace Sandbox {
         private static void RunRootQueryUsingDynamicProxy() {
             var server = new QueryServer<IRootQuery2>();
 
-            var result = server.Query(root => new {
+            var doc = server.Query(root => new {
                 Data = root.Page(id: 1, selection: page => new {
                     page.Title,
                     page.Modified,
@@ -149,43 +149,64 @@ namespace Sandbox {
                     })
                 })
             });
+
+            Console.WriteLine();
+            Console.WriteLine(JsonConvert.SerializeObject(doc, Formatting.Indented));
         }
 
-        private sealed class CaptureMembers : IInterceptor {
-            public void Intercept(IInvocation invocation) {
-                var methodName = invocation.Method.Name;
-                var returnType = invocation.Method.ReturnType;
-                if(methodName.StartsWith("get_", StringComparison.Ordinal)) {
-                    Console.WriteLine($"calling property {methodName.Substring(4)}");
-                } else {
-                    Console.WriteLine($"calling method {methodName}()");
-
-                    var args = invocation.Arguments;
-                    var last = args[args.Length - 1];
-                    var lastType = last.GetType();
-
-                    if(lastType.GetGenericTypeDefinition() == typeof(Func<,>)) {
-                        var selectionType = lastType.GenericTypeArguments[0];
-                        var selectionProxy = CreateCaptureProxy(selectionType);
-                        ((Delegate)last).DynamicInvoke(selectionProxy);
-                    }
-                }
-                invocation.ReturnValue = returnType.IsValueType ? Activator.CreateInstance(returnType) : null;
-            }
-        }
+        //--- Types ---
 
         private sealed class QueryServer<TQuery> {
+
+            //--- Types ---
+            private sealed class CaptureMembers : IInterceptor {
+
+                //--- Fields ---
+                private readonly int _level;
+
+                //--- Constructors ---
+                public CaptureMembers(int level) {
+                    _level = level;
+                }
+
+                //--- Methods ---
+                public void Intercept(IInvocation invocation) {
+                    var methodName = invocation.Method.Name;
+                    var returnType = invocation.Method.ReturnType;
+                    if(methodName.StartsWith("get_", StringComparison.Ordinal)) {
+                        Console.WriteLine(new string(' ', _level * 4) + $"calling property {methodName.Substring(4)}");
+                    } else {
+                        Console.WriteLine(new string(' ', _level * 4) + $"calling method {methodName}()");
+
+                        var args = invocation.Arguments;
+                        var last = args[args.Length - 1];
+                        var lastType = last.GetType();
+
+                        if(lastType.GetGenericTypeDefinition() == typeof(Func<,>)) {
+                            var selectionType = lastType.GenericTypeArguments[0];
+                            var selectionProxy = CreateCaptureProxy(selectionType, _level + 1);
+                            ((Delegate)last).DynamicInvoke(selectionProxy);
+                        }
+                    }
+                    invocation.ReturnValue = returnType.IsValueType ? Activator.CreateInstance(returnType) : null;
+                }
+            }
+
+            //--- Class Fields ---
+            private static readonly ProxyGenerator _generator = new ProxyGenerator();
+
+            //--- Class Methods ---
+            private static object CreateCaptureProxy(Type type, int level) {
+                return _generator.CreateInterfaceProxyWithoutTarget(type, new CaptureMembers(level));
+            }
+
+            //--- Methods ---
             public TResult Query<TResult>(Func<TQuery, TResult> selection) {
-                var proxy = (TQuery)CreateCaptureProxy(typeof(TQuery));
+                var proxy = (TQuery)CreateCaptureProxy(typeof(TQuery), 0);
                 return selection(proxy);
             }
         }
 
-        private static readonly ProxyGenerator _generator = new ProxyGenerator();
-
-        private static object CreateCaptureProxy(Type type) {
-            return _generator.CreateInterfaceProxyWithoutTarget(type, new CaptureMembers());
-        }
         #endregion
     }
 }
