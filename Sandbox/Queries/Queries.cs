@@ -125,13 +125,13 @@ namespace Sandbox.Queries {
         public Task<DateTime> Created() => _source.GetUserCreated(_userId);
     }
 
-    internal interface IRootQuery2 {
+    public interface IRootQuery2 {
 
         //--- Methods ---
         T Page<T>(int id, Func<IPageQuery2, T> selection);
     }
 
-    internal interface IPageQuery2 {
+    public interface IPageQuery2 {
 
         //--- Methods ---
         string Title { get; }
@@ -140,7 +140,7 @@ namespace Sandbox.Queries {
         IEnumerable<T> Subpages<T>(Func<IPageQuery2, T> selection);
     }
 
-    internal interface IUserQuery2 {
+    public interface IUserQuery2 {
 
         //--- Methods ---
         int Id { get; }
