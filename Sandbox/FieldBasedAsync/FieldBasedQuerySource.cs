@@ -19,13 +19,13 @@
  * limitations under the License.
  */
 
-using Sandbox.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Sandbox.Entities;
 
-namespace Sandbox.Queries {
+namespace Sandbox.FieldBasedAsync {
 
     internal sealed class FieldBasedQuerySource : IQuerySource {
 

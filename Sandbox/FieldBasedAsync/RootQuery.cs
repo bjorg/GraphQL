@@ -1,4 +1,4 @@
-/*
+﻿/*
  * MindTouch
  * Copyright (C) 2006-2016 MindTouch, Inc.
  * www.mindtouch.com  oss@mindtouch.com
@@ -20,21 +20,27 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Sandbox.Queries {
+namespace Sandbox.FieldBasedAsync {
 
-    internal interface IQuerySource : IDisposable {
+    internal sealed class RootQuery : IRootQuery {
+
+        //--- Fields ---
+        private readonly IQuerySource _source;
+
+        //--- Constructors ---
+        public RootQuery(IQuerySource source) {
+            _source = source;
+        }
 
         //--- Methods ---
-        IQuerySource New();
-        Task<string> GetPageTitle(int id);
-        Task<DateTime> GetPageCreated(int id);
-        Task<DateTime> GetPageModified(int id);
-        Task<int> GetPageAuthorId(int id);
-        Task<IEnumerable<int>> GetPageSubpages(int id);
-        Task<string> GetUserName(int id);
-        Task<DateTime> GetUserCreated(int id);
+        public Task<T> Page<T>(int id, Func<IPageQuery, Task<T>> selection) {
+            return selection(new PageQuery(_source, id));
+        }
+
+        public Task<T> User<T>(int id, Func<IUserQuery, Task<T>> selection) {
+            return selection(new UserQuery(_source, id));
+        }
     }
 }

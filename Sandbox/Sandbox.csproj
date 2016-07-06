@@ -58,18 +58,45 @@
   <ItemGroup>
     <Compile Include="Entities\PageBE.cs" />
     <Compile Include="Entities\UserBE.cs" />
-    <Compile Include="Queries\FieldBasedQuerySource.cs" />
-    <Compile Include="Queries\IQuerySource.cs" />
-    <Compile Include="Queries\Queries.cs" />
-    <Compile Include="Queries\RowBasedQuerySource.cs" />
+    <Compile Include="ExpressionBased\IPageQuery.cs" />
+    <Compile Include="ExpressionBased\IRootQuery.cs" />
+    <Compile Include="ExpressionBased\IUserQuery.cs" />
+    <Compile Include="ExpressionBased\Sample.cs" />
+    <Compile Include="FieldBasedAsync\IPageQuery.cs" />
+    <Compile Include="FieldBasedAsync\IQuerySource.cs" />
+    <Compile Include="FieldBasedAsync\IRootQuery.cs" />
+    <Compile Include="FieldBasedAsync\IUserQuery.cs" />
+    <Compile Include="FieldBasedAsync\PageQuery.cs" />
+    <Compile Include="FieldBasedAsync\RootQuery.cs" />
+    <Compile Include="FieldBasedAsync\RowBasedQuerySource.cs" />
+    <Compile Include="FieldBasedAsync\Sample.cs" />
+    <Compile Include="FieldBasedAsync\FieldBasedQuerySource.cs" />
+    <Compile Include="FieldBasedAsync\SandboxQueryServer.cs" />
+    <Compile Include="FieldBasedAsync\UserQuery.cs" />
+    <Compile Include="DynamicProxyBased\IPageQuery.cs" />
+    <Compile Include="DynamicProxyBased\IRootQuery.cs" />
+    <Compile Include="DynamicProxyBased\IUserQuery.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RowBasedAsync\IPageQuery.cs" />
+    <Compile Include="RowBasedAsync\IQuerySource.cs" />
+    <Compile Include="RowBasedAsync\IRootQuery.cs" />
+    <Compile Include="RowBasedAsync\IUserQuery.cs" />
+    <Compile Include="RowBasedAsync\PageQuery.cs" />
+    <Compile Include="RowBasedAsync\RootQuery.cs" />
+    <Compile Include="RowBasedAsync\RowBasedQuerySource.cs" />
+    <Compile Include="RowBasedAsync\Sample.cs" />
+    <Compile Include="RowBasedAsync\SandboxQueryServer.cs" />
+    <Compile Include="RowBasedAsync\UserQuery.cs" />
+    <Compile Include="DynamicProxyBased\Sample.cs" />
+    <Compile Include="DynamicProxyBased\QueryServer.cs" />
     <Compile Include="TaskEx.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

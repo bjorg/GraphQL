@@ -19,13 +19,13 @@
  * limitations under the License.
  */
 
-using Sandbox.Entities;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Sandbox.Entities;
 
-namespace Sandbox.Queries {
+namespace Sandbox.RowBasedAsync {
 
     internal sealed class RowBasedQuerySource : IQuerySource {
 
@@ -38,7 +38,7 @@ namespace Sandbox.Queries {
 
             //--- Methods ---
             public void Begin(int generation) {
-                lock (_counters) {
+                lock(_counters) {
                     int counter;
                     if(!_counters.TryGetValue(generation, out counter)) {
                         _tasks[generation] = new List<Task>();
@@ -49,7 +49,7 @@ namespace Sandbox.Queries {
 
             public Task<T> Add<T>(int generation, Func<T> function) {
                 var result = new Task<T>(function);
-                lock (_counters) {
+                lock(_counters) {
                     var tasks = _tasks[generation];
                     tasks.Add(result);
                 }
@@ -58,7 +58,7 @@ namespace Sandbox.Queries {
 
             public void End(int generation) {
                 List<Task> tasks = null;
-                lock (_counters) {
+                lock(_counters) {
                     int counter;
                     if(_counters.TryGetValue(generation, out counter)) {
                         switch(counter--) {
