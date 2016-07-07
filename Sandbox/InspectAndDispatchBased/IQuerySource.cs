@@ -23,32 +23,12 @@ using System;
 
 namespace Sandbox.InspectAndDispatchBased {
 
-    public interface IRootQuery {
+    internal interface IQuerySource : IDisposable {
 
         //--- Methods ---
-        T Page<T>(int id, Func<IPageQuery, T> selection);
-    }
-
-    internal class InspectRootQuery : IRootQuery {
-
-        //--- Fields ---
-        private readonly IQuerySource _source;
-
-        //--- Constructors ---
-        public InspectRootQuery(IQuerySource source) {
-            if(source == null) {
-                throw new ArgumentNullException(nameof(source));
-            }
-            _source = source;
-        }
-
-        //--- Methods ---
-        public T Page<T>(int id, Func<IPageQuery, T> selection) {
-            using(var source = _source.OpenNested()) {
-                _source.FetchPageById();
-                selection(new InspectPageQuery(source));
-            }
-            return default(T);
-        }
+        IQuerySource OpenNested();
+        void FetchPageById();
+        void FetchUserById();
+        void FetchSubpagesById();
     }
 }

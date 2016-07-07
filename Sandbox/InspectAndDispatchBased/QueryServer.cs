@@ -27,25 +27,79 @@ namespace Sandbox.InspectAndDispatchBased {
 
     internal sealed class QueryServer {
 
-        //--- Class Methods ---
-        private static void Print(IEnumerable<object> stack, int level) {
-            foreach(var item in stack.Reverse()) {
-                var subStack = item as Stack<object>;
-                if(subStack != null) {
-                    Print(subStack, level + 1);
-                } else {
-                    Console.WriteLine(new string(' ', level) + item);
+        //--- Types ---
+        private sealed class QuerySource : IQuerySource {
+
+            //--- Types ---
+            private sealed class Node {
+
+                //--- Fields ---
+                public readonly Node Parent;
+                public readonly List<string> Actions = new List<string>();
+                public readonly List<Node> ChildNodes = new List<Node>();
+
+                //--- Constructors ---
+                public Node(Node parent) {
+                    Parent = parent;
                 }
+            }
+
+            //--- Class Methods ---
+            private static void Print(Node node, int level) {
+                Console.WriteLine(new string(' ', level) + " " + string.Join(", ", node.Actions));
+                foreach(var child in node.ChildNodes) {
+                    if(child.Actions.Any()) {
+                        Print(child, level + 1);
+                    }
+                }
+            }
+
+            //--- Fields ---
+            private readonly Node _root;
+            private Node _current;
+
+            //---- Constructors ---
+            public QuerySource() {
+                _root = new Node(null);
+                _current = _root;
+            }
+
+            //--- Methosd ---
+            public void Dispose() {
+                _current = _current.Parent;
+            }
+
+            public IQuerySource OpenNested() {
+                var parent = _current;
+                _current = new Node(parent);
+                parent.ChildNodes.Add(_current);
+                return this;
+            }
+
+            public void FetchPageById() {
+                _current.Actions.Add(nameof(FetchPageById));
+            }
+
+            public void FetchUserById() {
+                _current.Actions.Add(nameof(FetchUserById));
+            }
+
+            public void FetchSubpagesById() {
+                _current.Actions.Add(nameof(FetchSubpagesById));
+            }
+
+            public void Print() {
+                Print(_root, 0);
             }
         }
 
         //--- Methods ---
         public TResult Query<TResult>(Func<IRootQuery, TResult> selection) {
-            var stack = new Stack<object>();
-            var root = new InspectRootQuery(stack);
-            var result =  selection(root);
-            Print(stack, 0);
-            return result;
+            using(var source = new QuerySource()) {
+                selection(new InspectRootQuery(source));
+                source.Print();
+            }
+            return default(TResult);
         }
     }
 }

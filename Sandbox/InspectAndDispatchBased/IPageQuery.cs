@@ -36,14 +36,14 @@ namespace Sandbox.InspectAndDispatchBased {
     internal class InspectPageQuery : IPageQuery {
 
         //--- Fields ---
-        private readonly Stack<object> _stack;
+        private readonly IQuerySource _source;
 
         //--- Constructors ---
-        public InspectPageQuery(Stack<object> stack) {
-            if(stack == null) {
-                throw new ArgumentNullException(nameof(stack));
+        public InspectPageQuery(IQuerySource source) {
+            if(source == null) {
+                throw new ArgumentNullException(nameof(source));
             }
-            _stack = stack;
+            _source = source;
         }
 
         //--- Properties ---
@@ -52,18 +52,18 @@ namespace Sandbox.InspectAndDispatchBased {
 
         //--- Methods ---
         public T Author<T>(Func<IUserQuery, T> selection) {
-            _stack.Push("IPageQuery.Author()");
-            var nested = new Stack<object>();
-            _stack.Push(nested);
-            selection(new InspectUserQuery(nested));
+            using(var source = _source.OpenNested()) {
+                source.FetchUserById();
+                selection(new InspectUserQuery(source));
+            }
             return default(T);
         }
 
         public IEnumerable<T> Subpages<T>(Func<IPageQuery, T> selection) {
-            _stack.Push("IPageQuery.Subpages()");
-            var stack = new Stack<object>();
-            _stack.Push(stack);
-            selection(new InspectPageQuery(stack));
+            using(var source = _source.OpenNested()) {
+                source.FetchSubpagesById();
+                selection(new InspectPageQuery(source));
+            }
             return default(IEnumerable<T>);
         }
     }

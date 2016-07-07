@@ -20,7 +20,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Sandbox.InspectAndDispatchBased {
 
@@ -35,14 +34,14 @@ namespace Sandbox.InspectAndDispatchBased {
     internal class InspectUserQuery : IUserQuery {
 
         //--- Fields ---
-        private readonly Stack<object> _stack;
+        private readonly IQuerySource _source;
 
         //--- Constructors ---
-        public InspectUserQuery(Stack<object> stack) {
-            if(stack == null) {
-                throw new ArgumentNullException(nameof(stack));
+        public InspectUserQuery(IQuerySource source) {
+            if(source == null) {
+                throw new ArgumentNullException(nameof(source));
             }
-            _stack = stack;
+            _source = source;
         }
 
         //--- Fields ---

@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="InspectAndDispatchBased\IPageQuery.cs" />
+    <Compile Include="InspectAndDispatchBased\IQuerySource.cs" />
     <Compile Include="InspectAndDispatchBased\IRootQuery.cs" />
     <Compile Include="InspectAndDispatchBased\IUserQuery.cs" />
     <Compile Include="InspectAndDispatchBased\QueryServer.cs" />
