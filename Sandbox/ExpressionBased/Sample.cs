@@ -27,7 +27,7 @@ namespace Sandbox.ExpressionBased {
     internal class Sample {
 
         //--- Class Methods ---
-        internal static void RunRootQueryUsingExpressions() {
+        internal static void Run() {
             IRootQuery root = null;
             var doc = new {
                 Data = root.Page(id: 1, selection: page => new {

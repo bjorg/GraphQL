@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MindTouch
  * Copyright (C) 2006-2016 MindTouch, Inc.
  * www.mindtouch.com  oss@mindtouch.com
@@ -20,39 +20,32 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace Sandbox {
+namespace Sandbox.InspectAndDispatchBased {
 
-    internal class Program {
+    internal sealed class QueryServer {
 
         //--- Class Methods ---
-        private static void Main(string[] args) {
-            /*
-            {
-                page(1) {
-                    title
-                    lastModified
-                    author {
-                        id
-                        name
-                    }
-                    subpages {
-                        title
-                        author {
-                            id
-                            name
-                        }
-                    }
+        private static void Print(IEnumerable<object> stack, int level) {
+            foreach(var item in stack.Reverse()) {
+                var subStack = item as Stack<object>;
+                if(subStack != null) {
+                    Print(subStack, level + 1);
+                } else {
+                    Console.WriteLine(new string(' ', level) + item);
                 }
             }
-            */
-            //RowBasedAsync.Sample.Run();
-            //FieldBasedAsync.Sample.Run();
-            //ExpressionBased.Sample.Run();
-            //DynamicProxyBased.Sample.Run();
-            InspectAndDispatchBased.Sample.Run();
-            Console.Write("Push a key to exit...");
-            Console.ReadKey();
+        }
+
+        //--- Methods ---
+        public TResult Query<TResult>(Func<IRootQuery, TResult> selection) {
+            var stack = new Stack<object>();
+            var root = new InspectRootQuery(stack);
+            var result =  selection(root);
+            Print(stack, 0);
+            return result;
         }
     }
 }

@@ -27,7 +27,7 @@ namespace Sandbox.FieldBasedAsync {
     internal class Sample {
 
         //--- Class Methods ---
-        internal static void RunRootQueryUsingFields() {
+        internal static void Run() {
             var server = new SandboxQueryServer<FieldBasedQuerySource>();
             var doc = server.Query(root => root.Page(1, page => TaskEx.Record(
                 (Title, Modified, Author, Subpages) => new { Title, Modified, Author, Subpages },

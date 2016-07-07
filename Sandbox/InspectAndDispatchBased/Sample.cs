@@ -22,13 +22,13 @@
 using System;
 using Newtonsoft.Json;
 
-namespace Sandbox.DynamicProxyBased {
+namespace Sandbox.InspectAndDispatchBased {
 
     internal class Sample {
 
         //--- Class Methods ---
         internal static void Run() {
-            var server = new QueryServer<IRootQuery>();
+            var server = new QueryServer();
 
             var doc = server.Query(root => new {
                 Data = root.Page(id: 1, selection: page => new {

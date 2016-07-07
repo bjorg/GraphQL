@@ -56,6 +56,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InspectAndDispatchBased\IPageQuery.cs" />
+    <Compile Include="InspectAndDispatchBased\IRootQuery.cs" />
+    <Compile Include="InspectAndDispatchBased\IUserQuery.cs" />
+    <Compile Include="InspectAndDispatchBased\QueryServer.cs" />
+    <Compile Include="InspectAndDispatchBased\Sample.cs" />
     <Compile Include="Entities\PageBE.cs" />
     <Compile Include="Entities\UserBE.cs" />
     <Compile Include="ExpressionBased\IPageQuery.cs" />
